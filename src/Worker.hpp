@@ -12,6 +12,7 @@
 #include "Params.hpp"
 #include "UIDrawer.hpp"
 #include "UIWidget.hpp"
+#include "UIWidgetsFactory.hpp"
 
 
 namespace ngs {
@@ -30,13 +31,21 @@ class Worker {
   // UI用カメラ
   ci::CameraOrtho ui_camera_;
 
+
+  const std::map<std::string, UI::DrawFunc> draw_func_ = {
+    { "blank", UI::Drawer::blank },
+    { "rect",  UI::Drawer::fillRect },
+    { "image", UI::Drawer::image },
+    { "text",  UI::Drawer::text },
+  };
   
-  UI::Widget root_widget_;
+  UI::WidgetsFactory widgets_factory_;
+  
+  UI::WidgetPtr root_widget_;
 
   bool touching_ = false;
   uint32_t touch_id_;
 
-  bool test_ = false;
   
   static void setupUICamera(ci::CameraOrtho& camera) noexcept
   {
@@ -53,17 +62,12 @@ public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    root_widget_("root", ci::vec2(), ci::app::getWindowSize(), UI::Drawer::fillRect)
+    widgets_factory_(draw_func_),
+    root_widget_(widgets_factory_.create(Params::load("widgets.json"), ci::vec2(), ci::app::getWindowSize()))
   {
     setupUICamera(ui_camera_);
 
-    root_widget_.setAnchor(UI::Widget::Anchor::TOP_LEFT,
-                           UI::Widget::Anchor::TOP_LEFT);
-    root_widget_.setVerticalScaling(1.0f);
-    root_widget_.setHorizontalScaling(0.5f);
-    root_widget_.setParam("color", ci::Color(1, 0, 0));
-
-    // コールバック関数
+    // // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
       {
         DOUT << widget.getIdentifier() << ":";
@@ -73,13 +77,6 @@ public:
         case UI::Widget::TouchEvent::BEGAN:
           {
             DOUT << "TOUCH_BEGAN" << std::endl;
-
-            auto w = widget.find("button1");
-            auto& color = w->getParam<ci::Color>("color");
-            color = test_ ? ci::Color(0.5, 0, 0)
-                          : ci::Color(0, 0.5, 0);
-
-            test_ = !test_;
           }
           break;
 
@@ -124,23 +121,8 @@ public:
         }
       };
 
-    {
-      UI::WidgetPtr widget = std::make_shared<UI::Widget>("button1", ci::vec2(), ci::vec2(200, 100), UI::Drawer::fillRect);
-      root_widget_.addChild(widget);
-      widget->setParam("color", ci::Color(0, 1, 0));
-      widget->setAnchor(UI::Widget::Anchor::BOTTOM_CENTER, UI::Widget::Anchor::MIDDLE_CENTER);
-      widget->enableTouchEvent(true);
-      widget->connect(callback);
-    }
-
-    {
-      UI::WidgetPtr widget = std::make_shared<UI::Widget>("button2", ci::vec2(0, 20), ci::vec2(200, 100), UI::Drawer::fillRect);
-      root_widget_.addChild(widget);
-      widget->setParam("color", ci::Color(0, 0, 1));
-      widget->setAnchor(UI::Widget::Anchor::BOTTOM_CENTER, UI::Widget::Anchor::BOTTOM_CENTER);
-      widget->enableTouchEvent(true);
-      widget->connect(callback);
-    }
+    root_widget_->find("button1")->connect(callback);
+    root_widget_->find("button2")->connect(callback);
   }
 
 
@@ -172,7 +154,7 @@ public:
       touching_ = true;
       ci::vec2 size = ci::app::getWindowSize();
 
-      root_widget_.touchBegan(touches[0], -size / 2.0f, size);
+      root_widget_->touchBegan(touches[0], -size / 2.0f, size);
     }
   }
 
@@ -187,7 +169,7 @@ public:
       if (touch_id_ == touch.getId())
       {
         ci::vec2 size = ci::app::getWindowSize();
-        root_widget_.touchMoved(touch, -size / 2.0f, size);
+        root_widget_->touchMoved(touch, -size / 2.0f, size);
         break;
       }
     }
@@ -204,7 +186,7 @@ public:
       if (touch_id_ == touch.getId())
       {
         ci::vec2 size = ci::app::getWindowSize();
-        root_widget_.touchEnded(touch, -size / 2.0f, size);
+        root_widget_->touchEnded(touch, -size / 2.0f, size);
 
         touching_ = false;
         break;
@@ -229,7 +211,7 @@ public:
     ci::gl::setMatrices(ui_camera_);
 
     ci::vec2 size = ci::app::getWindowSize();
-    root_widget_.draw(-size / 2.0f, size);
+    root_widget_->draw(-size / 2.0f, size);
   }
 
 };

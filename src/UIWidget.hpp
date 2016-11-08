@@ -288,6 +288,25 @@ public:
   }
   
 
+  // パラメーターの読み書きを簡易に書くためのラッパー
+  const boost::any& operator[](const std::string& key) const
+  {
+    return params_.at(key);
+  }
+
+  boost::any& operator[](const std::string& key)
+  {
+    return params_[key];
+  }
+
+  template<typename T>
+  const T& at(const std::string& key) const
+  {
+    return boost::any_cast<const T&>(params_.at(key));
+  }
+
+  
+#if 0
   template<typename T>
   void setParam(const std::string& key, const T& param)
   {
@@ -305,6 +324,7 @@ public:
   {
     return boost::any_cast<const T&>(params_.at(key));
   }
+#endif
 
 
   template<typename F>

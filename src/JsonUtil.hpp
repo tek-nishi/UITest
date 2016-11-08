@@ -104,9 +104,17 @@ ci::ColorAT<T> getColorA8(const ci::JsonTree& json) noexcept {
 }
 
 
+// 初期値付き値読み込み
 template<typename T>
 T getValue(const ci::JsonTree& json, const std::string& name, const T& default_value) noexcept {
   return (json.hasChild(name)) ? json[name].getValue<T>()
+                               : default_value;
+}
+
+// 初期値付きベクトル読み込み
+template<typename T>
+T getVec(const ci::JsonTree& json, const std::string& name, const T& default_value) noexcept {
+  return (json.hasChild(name)) ? getVec<T>(json[name])
                                : default_value;
 }
 
