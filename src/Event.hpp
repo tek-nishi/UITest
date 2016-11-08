@@ -21,7 +21,7 @@ class Event : private boost::noncopyable {
 
 
 public:
-  Event() noexcept = default;
+  Event() = default;
 
 
   template<typename F>

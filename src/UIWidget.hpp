@@ -15,7 +15,7 @@
 namespace ngs { namespace UI {
 
 // TIPS:自分自身を引数に取る関数があるので先行宣言が必要
-struct Widget;
+class Widget;
 using WidgetPtr = std::shared_ptr<Widget>;
 
 // 描画用関数
