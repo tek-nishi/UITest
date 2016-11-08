@@ -282,6 +282,14 @@ public:
     widgets_->insert({ widget->identifier_, widget });
   }
 
+  // 最上位のポインタをコンテナに登録
+  // FIXME:専用の関数を用意しているのが微妙
+  void addRoot(const WidgetPtr& widget) noexcept
+  {
+    widgets_->insert({ widget->identifier_, widget });
+  }
+  
+  
   WidgetPtr find(const std::string& identifier) noexcept
   {
     return widgets_->at(identifier);

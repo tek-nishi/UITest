@@ -106,23 +106,10 @@ class WidgetsFactory
     }
   }
 
-
-
-
-  
-public:
-  WidgetsFactory(const std::map<std::string, DrawFunc>& draw_func) noexcept
-    : draw_func_(draw_func)
-  {
-  }
-
-  ~WidgetsFactory() = default;
-
-  
   // JSONから生成(階層構造も含む)
   WidgetPtr create(const ci::JsonTree& params,
                    const ci::vec2& initial_position,
-                   const ci::vec2& initial_size) noexcept
+                   const ci::vec2& initial_size) const noexcept
   {
     // UI::Widgetを生成するのに必要な値
     const auto& identifier = params.getValueForKey<std::string>("identifier");
@@ -171,6 +158,30 @@ public:
         widget->addChild(create(child, initial_position, initial_size));
       }
     }
+    
+    return widget;
+  }
+
+  
+public:
+  WidgetsFactory(const std::map<std::string, DrawFunc>& draw_func) noexcept
+    : draw_func_(draw_func)
+  {
+  }
+
+  ~WidgetsFactory() = default;
+
+
+  // JSONからWidgetを生成する
+  WidgetPtr construct(const ci::JsonTree& params,
+                   const ci::vec2& initial_position,
+                      const ci::vec2& initial_size) noexcept
+  {
+    // TIPS:最初のインスタンスをコンテナに登録するために
+    // 改めて生成関数を呼び出している
+    auto widget = create(params, initial_position, initial_size);
+
+    widget->addRoot(widget);
     
     return widget;
   }
