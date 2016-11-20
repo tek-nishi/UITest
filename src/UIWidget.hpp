@@ -7,6 +7,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/any.hpp>
 #include <boost/optional.hpp>
+#include <cinder/Timeline.h>
 #include "Touch.hpp"
 #include "Event.hpp"
 #include "Misc.hpp"
@@ -54,12 +55,16 @@ public:
     CANCELED,            // タッチイベント中断
   };
 
-  
+
 private:
   std::string identifier_;
-  
-  ci::vec2 position_;
+
+  ci::Anim<ci::vec2> position_;
   ci::vec2 size_;
+
+  ci::Anim<ci::vec2> scale_;
+
+  ci::Anim<ci::ColorA> color_;
 
   Anchor anchor_pivot_    = Anchor::MIDDLE_CENTER;
   Anchor anchor_position_ = Anchor::MIDDLE_CENTER;
@@ -67,13 +72,16 @@ private:
   bool active_      = true;       // 有効・無効
   bool display_     = true;       // 表示・非表示
   bool touch_event_ = false;      // タッチイベント有効・無効
-  
+
   boost::optional<float> vertical_scaling_;
   boost::optional<float> horizontal_scaling_;
 
   // TIPS:振る舞いの違いを継承を使わないで実現する作戦
   std::map<std::string, boost::any> params_;
-  
+
+  // UIなどきっかけが必要な演出用
+  ci::TimelineRef timeline_ = ci::Timeline::create();
+
   std::vector<WidgetPtr> childs_;
   // クエリ用
   std::shared_ptr<std::map<std::string, WidgetPtr>> widgets_ = std::make_shared<std::map<std::string, WidgetPtr>>();
@@ -88,24 +96,31 @@ private:
   // 描画関数
   DrawFunc drawer_;
 
-  
+
   // タッチイベントを発生するか判定
   bool execTouchEvent() noexcept
   {
     return active_ && display_ && touch_event_;
   }
 
-  
+
 public:
-  Widget(std::string identifier, const ci::vec2& position, const ci::vec2& size, DrawFunc drawer) noexcept
+  Widget(std::string identifier, const ci::vec2& position, const ci::vec2& size,
+         const ci::TimelineRef& timeline, DrawFunc drawer) noexcept
     : identifier_(std::move(identifier)),
       position_(position),
       size_(size),
       drawer_(drawer)
   {
+    // 親のタイムラインに接続
+    timeline->add(timeline_);
   }
-  
-  ~Widget() = default;
+
+  ~Widget()
+  {
+    // 親から取り除く
+    timeline_->removeSelf();
+  }
 
 
   // FIXME:上流でシングルタッチ判定を行う
@@ -115,7 +130,7 @@ public:
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size); 
+    ci::vec2 size = getSize(parent_size);
     ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
 
     if (execTouchEvent())
@@ -127,7 +142,7 @@ public:
         events_(*this, TouchEvent::BEGAN, touch);
       }
     }
-    
+
     for (auto& widget : childs_)
     {
       widget->touchBegan(touch, pos, size);
@@ -139,7 +154,7 @@ public:
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size); 
+    ci::vec2 size = getSize(parent_size);
     ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
 
     if (execTouchEvent() && touching_)
@@ -148,7 +163,7 @@ public:
       bool cur_in  = testPointRect(touch.getPos(), pos, pos + size);
 
       TouchEvent event = TouchEvent::MOVED_IN;
-      
+
       if (!cur_in && prev_in)
       {
         // 移動しながら領域外へ
@@ -167,7 +182,7 @@ public:
 
       events_(*this, event, touch);
     }
-    
+
     for (auto& widget : childs_)
     {
       widget->touchMoved(touch, pos, size);
@@ -179,7 +194,7 @@ public:
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size); 
+    ci::vec2 size = getSize(parent_size);
     ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
 
     if (execTouchEvent() && touching_)
@@ -190,7 +205,7 @@ public:
                                                                         : TouchEvent::ENDED_OUT;
       events_(*this, event, touch);
     }
-    
+
     for (auto& widget : childs_)
     {
       widget->touchEnded(touch, pos, size);
@@ -202,8 +217,8 @@ public:
   {
     // TIPS:子供も含めて非表示
     if (!display_) return;
-    
-    ci::vec2 size = getSize(parent_size); 
+
+    ci::vec2 size = getSize(parent_size);
     ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
 
     drawer_(*this, pos, size);
@@ -213,14 +228,14 @@ public:
       widget->draw(pos, size);
     }
   }
-  
+
 
   // 識別子
   const std::string& getIdentifier() const noexcept
   {
     return identifier_;
   }
-  
+
   // 各種設定
   void setAnchor(const Anchor pivot, const Anchor position) noexcept
   {
@@ -245,23 +260,23 @@ public:
   {
     active_ = enable;
   }
-  
+
   bool isActive() const noexcept
   {
     return active_;
   }
-  
+
   // 表示・非表示
   void enableDisplay(const bool enable) noexcept
   {
     display_ = enable;
   }
-  
+
   bool isDisplay() const noexcept
   {
     return display_;
   }
-
+  
   // タッチイベントの有効・無効
   void enableTouchEvent(const bool enable) noexcept
   {
@@ -272,12 +287,44 @@ public:
   {
     return touch_event_;
   }
+
+  // 基本色
+  ci::Anim<ci::ColorA>& getColor() noexcept
+  {
+    return color_;
+  }
   
+  const ci::Anim<ci::ColorA>& getColor() const noexcept
+  {
+    return color_;
+  }
+
+  void setColor(const ci::ColorA& color) noexcept
+  {
+    color_ = color;
+  }
+
+  // Tween向け
+  ci::Anim<ci::vec2>& getPosition() noexcept
+  {
+    return position_;
+  }
+
+  ci::Anim<ci::vec2>& getScale() noexcept
+  {
+    return scale_;
+  }
+
+  const ci::TimelineRef& getTimeline() const noexcept
+  {
+    return timeline_;
+  }
   
+
   void addChild(const WidgetPtr& widget) noexcept
   {
     childs_.push_back(widget);
-    
+
     widget->widgets_ = widgets_;
     widgets_->insert({ widget->identifier_, widget });
   }
@@ -288,13 +335,13 @@ public:
   {
     widgets_->insert({ widget->identifier_, widget });
   }
-  
-  
+
+
   WidgetPtr find(const std::string& identifier) noexcept
   {
     return widgets_->at(identifier);
   }
-  
+
 
   // パラメーターの読み書きを簡易に書くためのラッパー
   const boost::any& operator[](const std::string& key) const
@@ -313,7 +360,7 @@ public:
     return boost::any_cast<const T&>(params_.at(key));
   }
 
-  
+
 #if 0
   template<typename T>
   void setParam(const std::string& key, const T& param)
@@ -341,7 +388,7 @@ public:
     return events_.connect_extended(callback);
   }
 
-  
+
 private:
   // スケーリングを適用したサイズを取得
   ci::vec2 getSize(const ci::vec2& parent_size) noexcept
@@ -350,10 +397,10 @@ private:
 
     if (horizontal_scaling_) size.x = parent_size.x * *horizontal_scaling_;
     if (vertical_scaling_)   size.y = parent_size.y * *vertical_scaling_;
-    
+
     return size;
   }
-  
+
   // アンカーを適用した表示位置を取得
   ci::vec2 getPosition(ci::vec2 pos, const ci::vec2& size, const ci::vec2& parent_size) noexcept
   {
@@ -373,7 +420,7 @@ private:
       pos.y -= size.y;
       break;
 
-      
+
     case Anchor::MIDDLE_LEFT:
       pos.y -= size.y / 2;
       break;
@@ -401,7 +448,7 @@ private:
       break;
     }
 
-    
+
     switch (anchor_position_)
     {
     case Anchor::TOP_LEFT:
@@ -418,7 +465,7 @@ private:
       pos.y += parent_size.y;
       break;
 
-      
+
     case Anchor::MIDDLE_LEFT:
       pos.y += parent_size.y / 2;
       break;

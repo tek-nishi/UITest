@@ -62,7 +62,7 @@ public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    widgets_factory_(draw_func_),
+    widgets_factory_(timeline_, draw_func_),
     root_widget_(widgets_factory_.construct(Params::load("widgets.json"), ci::vec2(), ci::app::getWindowSize()))
   {
     setupUICamera(ui_camera_);

@@ -3,8 +3,9 @@
 
   "type": "rect",
   "params": {
-    "color": [ "color", 0.5, 0.5, 0.5 ]
   },
+
+  "color": [ 0.5, 0.5, 0.5, 1 ],
 
   "anchor_pivot":    "TOP_LEFT",
   "anchor_position": "TOP_LEFT",
@@ -24,11 +25,12 @@
 
       "type": "rect",
       "params": {
-        "color": [ "color", 0.0, 1.0, 0.0 ],
         "image": [ "string", "sample.png" ],
         "text":  [ "string", "button" ],
         "position": [ "vec3", 0, 0, 0 ]
       },
+
+      "color": [ 0.0, 1.0, 0.0, 1 ],
 
       "anchor_pivot":    "BOTTOM_CENTER",
       "anchor_position": "MIDDLE_CENTER",
@@ -44,8 +46,9 @@
 
       "type": "rect",
       "params": {
-        "color": [ "color", 1.0, 0.0, 0.0 ]
       },
+
+      "color": [ 1.0, 0.0, 0.0, 1 ],
 
       "anchor_pivot":    "BOTTOM_CENTER",
       "anchor_position": "BOTTOM_CENTER",

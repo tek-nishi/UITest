@@ -19,7 +19,7 @@ void fillRect(const UI::Widget& widget, const ci::vec2& pos, const ci::vec2& siz
 {
   // FIXME:仮描画
   ci::Rectf rect(pos, pos + size);
-  ci::gl::color(widget.at<ci::Color>("color"));
+  ci::gl::color(widget.getColor());
   ci::gl::drawSolidRect(rect);
 }
 

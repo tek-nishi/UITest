@@ -32,12 +32,23 @@ std::vector<T> getArray(const ci::JsonTree& json) noexcept {
 template<typename T>
 T getVec(const ci::JsonTree& json) noexcept {
   T v;
-  for (size_t i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.length(); ++i) {
     v[i] = json[i].getValue<double>();
   }
 
   return v;
 }
+
+template<>
+ci::ColorA getVec<ci::ColorA>(const ci::JsonTree& json) noexcept {
+  ci::ColorA v;
+  for (size_t i = 0; i < 4; ++i) {
+    v[i] = json[i].getValue<double>();
+  }
+
+  return v;
+}
+
 
 ci::quat getQuat(const ci::JsonTree& json) {
   ci::vec3 v = getVec<ci::vec3>(json) * float(M_PI) / 180.0f;

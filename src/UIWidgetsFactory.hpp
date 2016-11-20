@@ -3,8 +3,11 @@
 //
 // UI::WidgetsをJSONから生成
 //
+// FIXME:描画関数もここで定義する??
+//
 
 #include "UIWidget.hpp"
+#include "UITween.hpp"
 #include "UIDrawer.hpp"
 
 
@@ -28,15 +31,38 @@ class WidgetsFactory
     { "BOTTOM_RIGHT",  Widget::Anchor::BOTTOM_RIGHT },
   };
 
+  ci::TimelineRef timeline_;
+  
   // TIPS:文字列から描画関数を指定用
   const std::map<std::string, DrawFunc> draw_func_;
 
+  // Tween設定
+  Tween tween_;
+  
+  void tweenCallback(const WidgetPtr& widget) const noexcept
+  {
+    widget->connect([this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
+                    {
+                      switch (touch_event)
+                      {
+                      case UI::Widget::TouchEvent::BEGAN:
+                        tween_.start(widget.getTimeline(), widget.getPosition(), widget.getScale(), widget.getColor());
+                        break;
+                        
+                      case UI::Widget::TouchEvent::ENDED_IN:
+                      case UI::Widget::TouchEvent::ENDED_OUT:
+                        break;
+                      }
+                    });
+  }
 
+  
   // 各種値をJsonから読み取る
   static void loadParams(const WidgetPtr& widget, const ci::JsonTree& params)
   {
     for (const auto& p : params["params"])
     {
+      // TIPS:switch文の文字列版
       std::map<std::string, std::function<void(Widget& widget, const ci::JsonTree& params)>> functions = {
         {
           "color",
@@ -118,7 +144,7 @@ class WidgetsFactory
 
     DrawFunc draw_func = draw_func_.at(params.getValueForKey<std::string>("type"));
 
-    auto widget = std::make_shared<UI::Widget>(identifier, position, size, draw_func);
+    auto widget = std::make_shared<UI::Widget>(identifier, position, size, timeline_, draw_func);
 
     // アンカー指定
     {
@@ -146,8 +172,14 @@ class WidgetsFactory
     widget->enableDisplay(params.getValueForKey<bool>("display"));
     widget->enableTouchEvent(params.getValueForKey<bool>("touch_event"));
 
+    widget->setColor(Json::getColorA<float>(params["color"]));
+    
     // パラメーター読み込み
     loadParams(widget, params);
+
+    // Tween
+    tweenCallback(widget);
+
     
     // 子供を追加
     // TIPS:再帰で実装
@@ -164,8 +196,10 @@ class WidgetsFactory
 
   
 public:
-  WidgetsFactory(const std::map<std::string, DrawFunc>& draw_func) noexcept
-    : draw_func_(draw_func)
+  WidgetsFactory(const ci::TimelineRef& timeline, const std::map<std::string, DrawFunc>& draw_func) noexcept
+    : timeline_(timeline),
+      draw_func_(draw_func),
+      tween_(Params::load("tween.json"))
   {
   }
 
