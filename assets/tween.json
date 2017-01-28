@@ -1,10 +1,10 @@
 [
   {
     "type":      "EaseOutAtan",
-    "target":    "position",
+    "target":    "position_",
 
-    "start":     [ 0, 0, 0 ],
-    "end":       [ 100, 0, 0 ],
+    "start":     [ 0, 0 ],
+    "end":       [ 100, 0 ],
 
     "duration":  1.0,
     "delay":     0,
@@ -16,7 +16,7 @@
       {
         "type":      "EaseOutQuad",
 
-        "end":       [ 0, 0, 0 ],
+        "end":       [ 0, 0 ],
 
         "duration":  1.0,
         "delay":     0,
@@ -27,16 +27,16 @@
     ]
   },
   {
-    "type":      "EaseInQuad",
+    "type":      "EaseOutBack",
     "target":    "scale",
 
-    "start":     [ 0, 0, 0 ],
-    "end":       [ 0, 0, 0 ],
+    "start":     [ 1, 1 ],
+    "end":       [ 0.5, 0.5 ],
 
-    "duration":  1.0,
+    "duration":  0.5,
     "delay":     0,
 
     "ping_pong": false,
-    "loop":      true
+    "loop":      false
   }
 ]

@@ -61,8 +61,10 @@ private:
 
   ci::Anim<ci::vec2> position_;
   ci::vec2 size_;
+  // スケーリングの中心
+  ci::vec2 center_ = { 0.5f, 0.5f };
 
-  ci::Anim<ci::vec2> scale_;
+  ci::Anim<ci::vec2> scale_ = ci::vec2(1.0f, 1.0f);
 
   ci::Anim<ci::ColorA> color_;
 
@@ -130,8 +132,9 @@ public:
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size);
-    ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
+    ci::vec2 orig_size = getSize(parent_size);
+    ci::vec2 size = orig_size * scale_();
+    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     if (execTouchEvent())
     {
@@ -154,8 +157,9 @@ public:
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size);
-    ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
+    ci::vec2 orig_size = getSize(parent_size);
+    ci::vec2 size = orig_size * scale_();
+    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     if (execTouchEvent() && touching_)
     {
@@ -194,8 +198,9 @@ public:
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size);
-    ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
+    ci::vec2 orig_size = getSize(parent_size);
+    ci::vec2 size = orig_size * scale_();
+    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     if (execTouchEvent() && touching_)
     {
@@ -218,8 +223,9 @@ public:
     // TIPS:子供も含めて非表示
     if (!display_) return;
 
-    ci::vec2 size = getSize(parent_size);
-    ci::vec2 pos  = getPosition(position_, size, parent_size) + parent_position;
+    ci::vec2 orig_size = getSize(parent_size);
+    ci::vec2 size = orig_size * scale_();
+    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     drawer_(*this, pos, size);
 
@@ -390,8 +396,8 @@ public:
 
 
 private:
-  // スケーリングを適用したサイズを取得
-  ci::vec2 getSize(const ci::vec2& parent_size) noexcept
+  // 親のスケーリングを適用したサイズを取得
+  ci::vec2 getSize(const ci::vec2& parent_size) const noexcept
   {
     ci::vec2 size = size_;
 
@@ -402,7 +408,9 @@ private:
   }
 
   // アンカーを適用した表示位置を取得
-  ci::vec2 getPosition(ci::vec2 pos, const ci::vec2& size, const ci::vec2& parent_size) noexcept
+  ci::vec2 getPosition(ci::vec2 pos,
+                       const ci::vec2& size,
+                       const ci::vec2& parent_size) const noexcept
   {
     switch (anchor_pivot_)
     {
@@ -493,6 +501,11 @@ private:
       break;
     }
 
+    // スケーリング中心を考慮
+    ci::vec2 d = size * center_;
+    ci::vec2 ofs = d * scale_() - d;
+    pos -= ofs;
+    
     return pos;
   }
 };

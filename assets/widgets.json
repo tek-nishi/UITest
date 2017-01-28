@@ -50,7 +50,7 @@
 
       "color": [ 1.0, 0.0, 0.0, 1 ],
 
-      "anchor_pivot":    "BOTTOM_CENTER",
+      "anchor_pivot":    "BOTTOM_LEFT",
       "anchor_position": "BOTTOM_CENTER",
 
       "active":      true,
