@@ -33,20 +33,23 @@ class Worker {
 
 
   const std::map<std::string, UI::DrawFunc> draw_func_ = {
-    { "blank", UI::Drawer::blank },
-    { "rect",  UI::Drawer::fillRect },
-    { "image", UI::Drawer::image },
-    { "text",  UI::Drawer::text },
+    { "blank",              UI::Drawer::blank },
+    { "rect",               UI::Drawer::rect },
+    { "fill_rect",          UI::Drawer::fillRect },
+    { "rounded_rect",       UI::Drawer::roundedRect },
+    { "rounded_fill_rect",  UI::Drawer::roundedFillRect },
+    { "image",              UI::Drawer::image },
+    { "text",               UI::Drawer::text },
   };
-  
+
   UI::WidgetsFactory widgets_factory_;
-  
+
   UI::WidgetPtr root_widget_;
 
   bool touching_ = false;
   uint32_t touch_id_;
 
-  
+
   static void setupUICamera(ci::CameraOrtho& camera) noexcept
   {
     auto size = ci::app::getWindowSize();
@@ -57,7 +60,7 @@ class Worker {
                     -1.0f, 100.0f);
   }
 
-  
+
 public:
   Worker() noexcept
   : params_(Params::load("params.json")),
@@ -71,7 +74,7 @@ public:
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
       {
         DOUT << widget.getIdentifier() << ":";
-        
+
         switch (touch_event)
         {
         case UI::Widget::TouchEvent::BEGAN:
@@ -103,7 +106,7 @@ public:
             DOUT << "TOUCH_MOVED_EDGE_IN" << std::endl;
           }
           break;
-          
+
         case UI::Widget::TouchEvent::ENDED_IN:
           {
             DOUT << "TOUCH_ENDED_IN" << std::endl;
@@ -163,7 +166,7 @@ public:
                     const std::vector<Touch>& touches) noexcept
   {
     if (!touching_) return;
-    
+
     for (const auto touch : touches)
     {
       if (touch_id_ == touch.getId())
@@ -194,12 +197,12 @@ public:
     }
   }
 
-  
+
   void resize() noexcept
   {
     setupUICamera(ui_camera_);
   }
-  
+
   void update() noexcept
   {
     timeline_->stepTo(ci::app::getElapsedSeconds());
