@@ -59,6 +59,14 @@ void roundedFillRect(const UI::Widget& widget, const ci::Rectf& rect, const ci::
 // 画像描画
 void image(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale)
 {
+  // FIXME:仮描画
+  ci::gl::color(widget.getColor());
+
+  ci::gl::ScopedTextureBind texture(widget.at<ci::gl::Texture2dRef>("image"));
+  auto shader = ci::gl::ShaderDef().texture();
+  ci::gl::ScopedGlslProg glsl(ci::gl::getStockShader(shader));
+  
+  ci::gl::drawSolidRect(rect, ci::vec2(0, 0), ci::vec2(1, 1));
 }
 
 // 文字列表示

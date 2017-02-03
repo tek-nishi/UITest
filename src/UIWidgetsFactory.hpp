@@ -4,6 +4,7 @@
 // UI::WidgetsをJSONから生成
 //
 
+#include <cinder/ImageIo.h>
 #include "UIWidget.hpp"
 #include "UITween.hpp"
 #include "UIDrawer.hpp"
@@ -108,6 +109,14 @@ class WidgetsFactory
             widget[params.getKey()] = vec;
           }
         },
+        {
+          "image",
+          [](Widget& widget, const ci::JsonTree& params)
+          {
+            auto image = ci::gl::Texture2d::create(ci::loadImage(Asset::load(params.getValueAtIndex<std::string>(1))));
+            widget[params.getKey()] = image;
+          }
+        }
       };
       
       // 配列の最初の値が型
