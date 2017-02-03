@@ -10,8 +10,8 @@
 #include "Arguments.hpp"
 #include "ConnectionHolder.hpp"
 #include "Params.hpp"
+#include "UICanvas.hpp"
 #include "UIDrawer.hpp"
-#include "UIWidget.hpp"
 #include "UIWidgetsFactory.hpp"
 
 
@@ -28,10 +28,10 @@ class Worker {
   // UIなどきっかけが必要な演出用
   ci::TimelineRef timeline_;
 
-  // UI用カメラ
-  ci::CameraOrtho ui_camera_;
+  // UI
+  UI::Canvas canvas_;
 
-
+  // UI描画用関数群
   const std::map<std::string, UI::DrawFunc> draw_func_ = {
     { "blank",              UI::Drawer::blank },
     { "rect",               UI::Drawer::rect },
@@ -42,34 +42,24 @@ class Worker {
     { "text",               UI::Drawer::text },
   };
 
+  // UI生成用
   UI::WidgetsFactory widgets_factory_;
-
-  UI::WidgetPtr root_widget_;
 
   bool touching_ = false;
   uint32_t touch_id_;
-
-
-  static void setupUICamera(ci::CameraOrtho& camera) noexcept
-  {
-    auto size = ci::app::getWindowSize();
-
-    // 画面中央が原点。右方向がX軸プラス、上方向がY軸プラスの座標系
-    camera.setOrtho(-size.x / 2.0f, size.x / 2.0f,
-                    -size.y / 2.0f, size.y / 2.0f,
-                    -1.0f, 100.0f);
-  }
 
 
 public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    widgets_factory_(timeline_, draw_func_),
-    root_widget_(widgets_factory_.construct(Params::load("widgets.json"), ci::vec2(), ci::app::getWindowSize()))
+    widgets_factory_(timeline_, draw_func_)
   {
-    setupUICamera(ui_camera_);
+    // JSONファイルからWidgetを生成
+    canvas_.setWidgets(widgets_factory_.construct(Params::load("widgets.json")));
 
+    
+#if 0
     // // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
       {
@@ -124,8 +114,9 @@ public:
         }
       };
 
-    root_widget_->find("button1")->connect(callback);
-    root_widget_->find("button2")->connect(callback);
+    canvas_->find("button1")->connect(callback);
+    canvas_->find("button2")->connect(callback);
+#endif
   }
 
 
@@ -157,7 +148,7 @@ public:
       touching_ = true;
       ci::vec2 size = ci::app::getWindowSize();
 
-      root_widget_->touchBegan(touches[0], -size / 2.0f, size);
+      // root_widget_->touchBegan(touches[0], -size / 2.0f, size);
     }
   }
 
@@ -172,7 +163,7 @@ public:
       if (touch_id_ == touch.getId())
       {
         ci::vec2 size = ci::app::getWindowSize();
-        root_widget_->touchMoved(touch, -size / 2.0f, size);
+        // root_widget_->touchMoved(touch, -size / 2.0f, size);
         break;
       }
     }
@@ -189,7 +180,7 @@ public:
       if (touch_id_ == touch.getId())
       {
         ci::vec2 size = ci::app::getWindowSize();
-        root_widget_->touchEnded(touch, -size / 2.0f, size);
+        // root_widget_->touchEnded(touch, -size / 2.0f, size);
 
         touching_ = false;
         break;
@@ -200,7 +191,7 @@ public:
 
   void resize() noexcept
   {
-    setupUICamera(ui_camera_);
+    canvas_.resize(ci::app::getWindowSize());
   }
 
   void update() noexcept
@@ -211,10 +202,7 @@ public:
   void draw() noexcept
   {
     ci::gl::clear(ci::Color(0, 0, 0));
-    ci::gl::setMatrices(ui_camera_);
-
-    ci::vec2 size = ci::app::getWindowSize();
-    root_widget_->draw(-size / 2.0f, size);
+    canvas_.draw();
   }
 
 };

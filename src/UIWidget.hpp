@@ -20,27 +20,13 @@ class Widget;
 using WidgetPtr = std::shared_ptr<Widget>;
 
 // 描画用関数
-using DrawFunc = std::function<void (const Widget&, const ci::vec2& pos, const ci::vec2& size)>;
+using DrawFunc = std::function<void (const Widget&, const ci::Rectf& rect, const ci::vec2& scale)>;
+
 
 class Widget
   : private boost::noncopyable
 {
 public:
-  // 画面レイアウト用の指示
-  enum Anchor {
-    TOP_LEFT,
-    TOP_CENTER,
-    TOP_RIGHT,
-
-    MIDDLE_LEFT,
-    MIDDLE_CENTER,
-    MIDDLE_RIGHT,
-
-    BOTTOM_LEFT,
-    BOTTOM_CENTER,
-    BOTTOM_RIGHT,
-  };
-
   enum TouchEvent {
     BEGAN,               // 領域内でタッチ
 
@@ -59,24 +45,23 @@ public:
 private:
   std::string identifier_;
 
-  ci::Anim<ci::vec2> position_;
-  ci::vec2 size_;
-  // スケーリングの中心
-  ci::vec2 center_ = { 0.5f, 0.5f };
+  ci::Rectf rect_;
 
-  ci::Anim<ci::vec2> scale_ = ci::vec2(1.0f, 1.0f);
+  // スケーリングの中心(normalized)
+  ci::vec2 pivot_ = { 0.5f, 0.5f };
+
+  // 親のサイズの影響力(normalized)
+  ci::vec2 anchor_min_ = { 0.5f, 0.5f };
+  ci::vec2 anchor_max_ = { 0.5f, 0.5f };
+
+  ci::vec2 scale_ = { 1.0f, 1.0f };
 
   ci::Anim<ci::ColorA> color_;
 
-  Anchor anchor_pivot_    = Anchor::MIDDLE_CENTER;
-  Anchor anchor_position_ = Anchor::MIDDLE_CENTER;
 
   bool active_      = true;       // 有効・無効
   bool display_     = true;       // 表示・非表示
   bool touch_event_ = false;      // タッチイベント有効・無効
-
-  boost::optional<float> vertical_scaling_;
-  boost::optional<float> horizontal_scaling_;
 
   // TIPS:振る舞いの違いを継承を使わないで実現する作戦
   std::map<std::string, boost::any> params_;
@@ -86,7 +71,7 @@ private:
 
   std::vector<WidgetPtr> childs_;
   // クエリ用
-  std::shared_ptr<std::map<std::string, WidgetPtr>> widgets_ = std::make_shared<std::map<std::string, WidgetPtr>>();
+  std::shared_ptr<std::map<std::string, Widget*>> widgets_;
 
   // タッチイベントのコールバック
   using EventType = boost::signals2::signal<void (Widget&, const TouchEvent, const Touch&)>;
@@ -107,15 +92,19 @@ private:
 
 
 public:
-  Widget(std::string identifier, const ci::vec2& position, const ci::vec2& size,
+  Widget(std::string identifier, const ci::Rectf& rect,
+         const std::shared_ptr<std::map<std::string, Widget*>>& widgets,
          const ci::TimelineRef& timeline, DrawFunc drawer) noexcept
     : identifier_(std::move(identifier)),
-      position_(position),
-      size_(size),
+      rect_(rect),
+      widgets_(widgets),
       drawer_(drawer)
   {
     // 親のタイムラインに接続
     timeline->add(timeline_);
+
+    // クエリ用のコンテナに自分を登録
+    widgets_->insert({ identifier_, this });
   }
 
   ~Widget()
@@ -125,6 +114,7 @@ public:
   }
 
 
+#if 0
   // FIXME:上流でシングルタッチ判定を行う
   // TODO:酷いコピペを減らす
   void touchBegan(const Touch& touch, const ci::vec2& parent_position, const ci::vec2& parent_size)
@@ -133,7 +123,7 @@ public:
     if (!display_) return;
 
     ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_();
+    ci::vec2 size = orig_size * scale_;
     ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     if (execTouchEvent())
@@ -158,7 +148,7 @@ public:
     if (!display_) return;
 
     ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_();
+    ci::vec2 size = orig_size * scale_;
     ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     if (execTouchEvent() && touching_)
@@ -199,7 +189,7 @@ public:
     if (!display_) return;
 
     ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_();
+    ci::vec2 size = orig_size * scale_;
     ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
 
     if (execTouchEvent() && touching_)
@@ -216,22 +206,26 @@ public:
       widget->touchEnded(touch, pos, size);
     }
   }
+#endif
 
 
-  void draw(const ci::vec2& parent_position, const ci::vec2& parent_size) noexcept
+  void draw(const ci::Rectf& parent_rect, const ci::vec2& parent_scale) noexcept
   {
     // TIPS:子供も含めて非表示
     if (!display_) return;
 
-    ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_();
-    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
+    ci::vec2 scale = parent_scale * scale_;
+    auto rect = calcRect(parent_rect, scale);
 
-    drawer_(*this, pos, size);
+    // ci::app::console() << identifier_ << std::endl
+    //                    << rect << std::endl
+    //                    << scale << std::endl;
+    
+    drawer_(*this, rect, scale);
 
     for (const auto& widget : childs_)
     {
-      widget->draw(pos, size);
+      widget->draw(rect, scale);
     }
   }
 
@@ -243,24 +237,22 @@ public:
   }
 
   // 各種設定
-  void setAnchor(const Anchor pivot, const Anchor position) noexcept
+  void setPivot(const ci::vec2& pivot) noexcept
   {
-    anchor_pivot_    = pivot;
-    anchor_position_ = position;
+    pivot_ = pivot;
   }
 
-  // 縦方向は親のサイズに従う
-  void setVerticalScaling(boost::optional<float> value) noexcept
+  void setAnchor(const ci::vec2& anchor_min, const ci::vec2& anchor_max) noexcept
   {
-    vertical_scaling_ = value;
+    anchor_min_ = anchor_min;
+    anchor_max_ = anchor_max;
   }
 
-  // 横方向は親のサイズに従う
-  void setHorizontalScaling(boost::optional<float> value) noexcept
+  void setScale(const ci::vec2& scale) noexcept
   {
-    horizontal_scaling_ = value;
+    scale_ = scale;
   }
-
+  
   // 有効・無効
   void enableActive(const bool enable) noexcept
   {
@@ -282,7 +274,7 @@ public:
   {
     return display_;
   }
-  
+
   // タッチイベントの有効・無効
   void enableTouchEvent(const bool enable) noexcept
   {
@@ -299,7 +291,7 @@ public:
   {
     return color_;
   }
-  
+
   const ci::Anim<ci::ColorA>& getColor() const noexcept
   {
     return color_;
@@ -310,6 +302,7 @@ public:
     color_ = color;
   }
 
+#if 0
   // Tween向け
   ci::Anim<ci::vec2>& getPosition() noexcept
   {
@@ -320,30 +313,20 @@ public:
   {
     return scale_;
   }
+#endif
 
   const ci::TimelineRef& getTimeline() const noexcept
   {
     return timeline_;
   }
-  
+
 
   void addChild(const WidgetPtr& widget) noexcept
   {
     childs_.push_back(widget);
-
-    widget->widgets_ = widgets_;
-    widgets_->insert({ widget->identifier_, widget });
   }
 
-  // 最上位のポインタをコンテナに登録
-  // FIXME:専用の関数を用意しているのが微妙
-  void addRoot(const WidgetPtr& widget) noexcept
-  {
-    widgets_->insert({ widget->identifier_, widget });
-  }
-
-
-  WidgetPtr find(const std::string& identifier) noexcept
+  Widget* find(const std::string& identifier) noexcept
   {
     return widgets_->at(identifier);
   }
@@ -396,117 +379,26 @@ public:
 
 
 private:
-  // 親のスケーリングを適用したサイズを取得
-  ci::vec2 getSize(const ci::vec2& parent_size) const noexcept
+  // 親の情報から自分の位置、サイズを計算
+  ci::Rectf calcRect(const ci::Rectf& parent_rect, const ci::vec2& scale) const noexcept
   {
-    ci::vec2 size = size_;
+    ci::vec2 parent_size = parent_rect.getSize();
 
-    if (horizontal_scaling_) size.x = parent_size.x * *horizontal_scaling_;
-    if (vertical_scaling_)   size.y = parent_size.y * *vertical_scaling_;
+    // 親のサイズとアンカーから左下・右上の座標を計算
+    ci::vec2 anchor_min = parent_size * anchor_min_;
+    ci::vec2 anchor_max = parent_size * anchor_max_;
 
-    return size;
-  }
+    // 相対座標(スケーリング抜き)
+    ci::vec2 pos  = rect_.getUpperLeft() + anchor_min;
+    ci::vec2 size = rect_.getLowerRight() + anchor_max - pos;
 
-  // アンカーを適用した表示位置を取得
-  ci::vec2 getPosition(ci::vec2 pos,
-                       const ci::vec2& size,
-                       const ci::vec2& parent_size) const noexcept
-  {
-    switch (anchor_pivot_)
-    {
-    case Anchor::TOP_LEFT:
-      pos.y -= size.y;
-      break;
+    // pivotを考慮したスケーリング
+    ci::vec2 d = size * pivot_;
+    pos -= d * scale - d;
+    size *= scale;
 
-    case Anchor::TOP_CENTER:
-      pos.x -= size.x / 2;
-      pos.y -= size.y;
-      break;
-
-    case Anchor::TOP_RIGHT:
-      pos.x -= size.x;
-      pos.y -= size.y;
-      break;
-
-
-    case Anchor::MIDDLE_LEFT:
-      pos.y -= size.y / 2;
-      break;
-
-    case Anchor::MIDDLE_CENTER:
-      pos.x -= size.x / 2;
-      pos.y -= size.y / 2;
-      break;
-
-    case Anchor::MIDDLE_RIGHT:
-      pos.x -= size.x;
-      pos.y -= size.y / 2;
-      break;
-
-
-    case Anchor::BOTTOM_LEFT:
-      break;
-
-    case Anchor::BOTTOM_CENTER:
-      pos.x -= size.x / 2;
-      break;
-
-    case Anchor::BOTTOM_RIGHT:
-      pos.x -= size.x;
-      break;
-    }
-
-
-    switch (anchor_position_)
-    {
-    case Anchor::TOP_LEFT:
-      pos.y += parent_size.y;
-      break;
-
-    case Anchor::TOP_CENTER:
-      pos.x += parent_size.x / 2;
-      pos.y += parent_size.y;
-      break;
-
-    case Anchor::TOP_RIGHT:
-      pos.x += parent_size.x;
-      pos.y += parent_size.y;
-      break;
-
-
-    case Anchor::MIDDLE_LEFT:
-      pos.y += parent_size.y / 2;
-      break;
-
-    case Anchor::MIDDLE_CENTER:
-      pos.x += parent_size.x / 2;
-      pos.y += parent_size.y / 2;
-      break;
-
-    case Anchor::MIDDLE_RIGHT:
-      pos.x += parent_size.x;
-      pos.y += parent_size.y / 2;
-      break;
-
-
-    case Anchor::BOTTOM_LEFT:
-      break;
-
-    case Anchor::BOTTOM_CENTER:
-      pos.x += parent_size.x / 2;
-      break;
-
-    case Anchor::BOTTOM_RIGHT:
-      pos.x += parent_size.x;
-      break;
-    }
-
-    // スケーリング中心を考慮
-    ci::vec2 d = size * center_;
-    ci::vec2 ofs = d * scale_() - d;
-    pos -= ofs;
-    
-    return pos;
+    ci::vec2 parent_pos = parent_rect.getUpperLeft();
+    return ci::Rectf(pos + parent_pos, pos + size + parent_pos);
   }
 };
 

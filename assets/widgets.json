@@ -1,17 +1,21 @@
 {
   "identifier": "root",
 
+  "rect": [ 50, 50, -50, -50 ],
+
+  "anchor": [
+    [ 0.0, 0.0 ],
+    [ 1.0, 1.0 ]
+  ],
+
+  "pivot": [ 0.1, 0.1 ],
+  "scale": [ 1.0, 1.0 ],
+
   "type": "fill_rect",
   "params": {
   },
 
   "color": [ 0.5, 0.5, 0.5, 1 ],
-
-  "anchor_pivot":    "TOP_LEFT",
-  "anchor_position": "TOP_LEFT",
-
-  "horizontal_scaling": 0.5,
-  "vertical_scaling":   1.0,
 
   "active":      true,
   "display":     true,
@@ -20,44 +24,54 @@
   "childlen": [
     {
       "identifier": "button1",
-      "position":   [ 0, 0 ],
-      "size":       [ 200, 100 ],
+
+      "rect": [ -50, 0, 50, 50 ],
+
+      "anchor": [
+        [ 0.5, 0.0 ],
+        [ 0.5, 0.0 ]
+      ],
+
+      "pivot": [ 0.5, 0.5 ],
+
+      "scale": [ 1, 1 ],
 
       "type": "fill_rect",
       "params": {
-        "image": [ "string", "sample.png" ],
-        "text":  [ "string", "button" ],
-        "position": [ "vec3", 0, 0, 0 ]
       },
 
       "color": [ 0.0, 1.0, 0.0, 1 ],
 
-      "anchor_pivot":    "BOTTOM_CENTER",
-      "anchor_position": "MIDDLE_CENTER",
-
       "active":      true,
       "display":     true,
-      "touch_event": true
-    },
-    {
-      "identifier": "button2",
-      "position":   [ 0, 20 ],
-      "size":       [ 200, 100 ],
+      "touch_event": true,
 
-      "type": "rect",
-      "params": {
-        "corner_radius": [ "float", 10 ],
-        "line_width": [ "float", 4 ]
-      },
+      "childlen": [
+        {
+          "identifier": "button2",
 
-      "color": [ 1.0, 0.0, 0.0, 1 ],
+          "rect": [ -25, 0, 25, 25 ],
 
-      "anchor_pivot":    "BOTTOM_LEFT",
-      "anchor_position": "BOTTOM_CENTER",
+          "anchor": [
+            [ 0.5, 0.0 ],
+            [ 0.5, 0.0 ]
+          ],
 
-      "active":      true,
-      "display":     true,
-      "touch_event": true
+          "pivot": [ 0.5, 0.5 ],
+
+          "scale": [ 1, 1 ],
+
+          "type": "fill_rect",
+          "params": {
+          },
+
+          "color": [ 0.0, 0.0, 1.0, 1 ],
+
+          "active":      true,
+          "display":     true,
+          "touch_event": true
+        }
+      ]
     }
   ]
 }

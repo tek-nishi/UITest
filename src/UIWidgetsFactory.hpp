@@ -3,8 +3,6 @@
 //
 // UI::WidgetsをJSONから生成
 //
-// FIXME:描画関数もここで定義する??
-//
 
 #include "UIWidget.hpp"
 #include "UITween.hpp"
@@ -16,21 +14,6 @@ namespace ngs { namespace UI {
 class WidgetsFactory
   : private boost::noncopyable
 {
-  // TIPS:アンカーを文字列からenumに変換する用
-  const std::map<std::string, Widget::Anchor> anchor = {
-    { "TOP_LEFT",   Widget::Anchor::TOP_LEFT },
-    { "TOP_CENTER", Widget::Anchor::TOP_CENTER },
-    { "TOP_RIGHT",  Widget::Anchor::TOP_RIGHT },
-
-    { "MIDDLE_LEFT",   Widget::Anchor::MIDDLE_LEFT },
-    { "MIDDLE_CENTER", Widget::Anchor::MIDDLE_CENTER },
-    { "MIDDLE_RIGHT",  Widget::Anchor::MIDDLE_RIGHT },
-
-    { "BOTTOM_LEFT",   Widget::Anchor::BOTTOM_LEFT },
-    { "BOTTOM_CENTER", Widget::Anchor::BOTTOM_CENTER },
-    { "BOTTOM_RIGHT",  Widget::Anchor::BOTTOM_RIGHT },
-  };
-
   ci::TimelineRef timeline_;
   
   // TIPS:文字列から描画関数を指定用
@@ -38,7 +21,8 @@ class WidgetsFactory
 
   // Tween設定
   Tween tween_;
-  
+
+#if 0
   void tweenCallback(const WidgetPtr& widget) const noexcept
   {
     widget->connect([this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
@@ -55,6 +39,7 @@ class WidgetsFactory
                       }
                     });
   }
+#endif
 
   
   // 各種値をJsonから読み取る
@@ -63,7 +48,7 @@ class WidgetsFactory
     for (const auto& p : params["params"])
     {
       // TIPS:switch文の文字列版
-      std::map<std::string, std::function<void(Widget& widget, const ci::JsonTree& params)>> functions = {
+      static std::map<std::string, std::function<void(Widget& widget, const ci::JsonTree& params)>> functions = {
         {
           "color",
           [](Widget& widget, const ci::JsonTree& params)
@@ -126,59 +111,55 @@ class WidgetsFactory
       };
       
       // 配列の最初の値が型
-      const auto& type = p.getValueAtIndex<std::string>(0);
-
+      auto type = p.getValueAtIndex<std::string>(0);
       functions.at(type)(*widget.get(), p);
     }
   }
 
   // JSONから生成(階層構造も含む)
   WidgetPtr create(const ci::JsonTree& params,
-                   const ci::vec2& initial_position,
-                   const ci::vec2& initial_size) const noexcept
+                   const std::shared_ptr<std::map<std::string, Widget*>>& widgets) const noexcept
   {
     // UI::Widgetを生成するのに必要な値
-    const auto& identifier = params.getValueForKey<std::string>("identifier");
-    const auto position    = Json::getVec(params, "position", initial_position);
-    const auto size        = Json::getVec(params, "size",     initial_size);
-
+    auto identifier = params.getValueForKey<std::string>("identifier");
+    auto rect = Json::getRect(params["rect"]);
     DrawFunc draw_func = draw_func_.at(params.getValueForKey<std::string>("type"));
 
-    auto widget = std::make_shared<UI::Widget>(identifier, position, size, timeline_, draw_func);
+    auto widget = std::make_shared<UI::Widget>(identifier, rect, widgets, timeline_, draw_func);
 
-    // アンカー指定
+    // アンカー
+    if (params.hasChild("anchor"))
     {
-      const auto& anchor_pivot    = params.getValueForKey<std::string>("anchor_pivot");
-      const auto& anchor_position = params.getValueForKey<std::string>("anchor_position");
-
-      widget->setAnchor(anchor.at(anchor_pivot), anchor.at(anchor_position));
+      widget->setAnchor(Json::getVec<ci::vec2>(params["anchor"][0]),
+                        Json::getVec<ci::vec2>(params["anchor"][1]));
+    }
+    
+    // スケーリング
+    if (params.hasChild("scale"))
+    {
+      widget->setScale(Json::getVec<ci::vec2>(params["scale"]));
     }
 
-    // スケーリング指定
-    if (params.hasChild("vertical_scaling"))
+    if (params.hasChild("pivot"))
     {
-      float value = params.getValueForKey<float>("vertical_scaling");
-      widget->setVerticalScaling(value);
+      widget->setPivot(Json::getVec<ci::vec2>(params["pivot"]));
     }
 
-    if (params.hasChild("horizontal_scaling"))
+    if (params.hasChild("color"))
     {
-      float value = params.getValueForKey<float>("horizontal_scaling");
-      widget->setHorizontalScaling(value);
+      widget->setColor(Json::getColorA<float>(params["color"]));
     }
 
     // 各種動作指定
     widget->enableActive(params.getValueForKey<bool>("active"));
     widget->enableDisplay(params.getValueForKey<bool>("display"));
     widget->enableTouchEvent(params.getValueForKey<bool>("touch_event"));
-
-    widget->setColor(Json::getColorA<float>(params["color"]));
     
     // パラメーター読み込み
     loadParams(widget, params);
 
     // Tween
-    tweenCallback(widget);
+    // tweenCallback(widget);
 
     
     // 子供を追加
@@ -187,7 +168,7 @@ class WidgetsFactory
     {
       for (const auto& child : params["childlen"])
       {
-        widget->addChild(create(child, initial_position, initial_size));
+        widget->addChild(create(child, widgets));
       }
     }
     
@@ -207,17 +188,11 @@ public:
 
 
   // JSONからWidgetを生成する
-  WidgetPtr construct(const ci::JsonTree& params,
-                   const ci::vec2& initial_position,
-                      const ci::vec2& initial_size) noexcept
+  WidgetPtr construct(const ci::JsonTree& params) noexcept
   {
-    // TIPS:最初のインスタンスをコンテナに登録するために
-    // 改めて生成関数を呼び出している
-    auto widget = create(params, initial_position, initial_size);
-
-    widget->addRoot(widget);
-    
-    return widget;
+    // クエリ用
+    std::shared_ptr<std::map<std::string, Widget*>> widgets = std::make_shared<std::map<std::string, Widget*>>();
+    return create(params, widgets);
   }
   
 };
