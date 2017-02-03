@@ -54,6 +54,26 @@ public:
     rect_ = ci::Rectf(-size_.x / 2.0f, -size_.y / 2.0f, size_.x / 2.0f, size_.y / 2.0f);
   }
 
+
+  void touchBegan(const Touch& touch)
+  {
+    ci::vec2 scale{ 1.0f, 1.0f };
+    root_widget_->touchBegan(touch, rect_, scale);
+  }
+
+  void touchMoved(const Touch& touch)
+  {
+    ci::vec2 scale{ 1.0f, 1.0f };
+    root_widget_->touchMoved(touch, rect_, scale);
+  }
+
+  void touchEnded(const Touch& touch)
+  {
+    ci::vec2 scale{ 1.0f, 1.0f };
+    root_widget_->touchEnded(touch, rect_, scale);
+  }
+  
+  
   void draw() noexcept
   {
     ci::gl::setMatrices(camera_);

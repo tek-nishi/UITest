@@ -114,21 +114,19 @@ public:
   }
 
 
-#if 0
   // FIXME:上流でシングルタッチ判定を行う
   // TODO:酷いコピペを減らす
-  void touchBegan(const Touch& touch, const ci::vec2& parent_position, const ci::vec2& parent_size)
+  void touchBegan(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale)
   {
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_;
-    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
+    ci::vec2 scale = parent_scale * scale_;
+    auto rect = calcRect(parent_rect, scale);
 
     if (execTouchEvent())
     {
-      if (testPointRect(touch.getPos(), pos, pos + size))
+      if (rect.contains(touch.getPos()))
       {
         // タッチイベント発生
         touching_ = true;
@@ -138,23 +136,22 @@ public:
 
     for (auto& widget : childs_)
     {
-      widget->touchBegan(touch, pos, size);
+      widget->touchBegan(touch, rect, scale);
     }
   }
 
-  void touchMoved(const Touch& touch, const ci::vec2& parent_position, const ci::vec2& parent_size)
+  void touchMoved(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale)
   {
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_;
-    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
+    ci::vec2 scale = parent_scale * scale_;
+    auto rect = calcRect(parent_rect, scale);
 
     if (execTouchEvent() && touching_)
     {
-      bool prev_in = testPointRect(touch.getPrevPos(), pos, pos + size);
-      bool cur_in  = testPointRect(touch.getPos(), pos, pos + size);
+      bool prev_in = rect.contains(touch.getPrevPos());
+      bool cur_in  = rect.contains(touch.getPos());
 
       TouchEvent event = TouchEvent::MOVED_IN;
 
@@ -179,34 +176,32 @@ public:
 
     for (auto& widget : childs_)
     {
-      widget->touchMoved(touch, pos, size);
+      widget->touchMoved(touch, rect, scale);
     }
   }
 
-  void touchEnded(const Touch& touch, const ci::vec2& parent_position, const ci::vec2& parent_size)
+  void touchEnded(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale)
   {
     // TIPS:子供も含めて判定しない
     if (!display_) return;
 
-    ci::vec2 orig_size = getSize(parent_size);
-    ci::vec2 size = orig_size * scale_;
-    ci::vec2 pos  = getPosition(position_, orig_size, parent_size) + parent_position;
+    ci::vec2 scale = parent_scale * scale_;
+    auto rect = calcRect(parent_rect, scale);
 
     if (execTouchEvent() && touching_)
     {
       touching_ = false;
 
-      TouchEvent event = testPointRect(touch.getPos(), pos, pos + size) ? TouchEvent::ENDED_IN
-                                                                        : TouchEvent::ENDED_OUT;
+      TouchEvent event = rect.contains(touch.getPos()) ? TouchEvent::ENDED_IN
+                                                       : TouchEvent::ENDED_OUT;
       events_(*this, event, touch);
     }
 
     for (auto& widget : childs_)
     {
-      widget->touchEnded(touch, pos, size);
+      widget->touchEnded(touch, rect, scale);
     }
   }
-#endif
 
 
   void draw(const ci::Rectf& parent_rect, const ci::vec2& parent_scale) noexcept

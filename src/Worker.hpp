@@ -59,7 +59,6 @@ public:
     canvas_.setWidgets(widgets_factory_.construct(Params::load("widgets.json")));
 
     
-#if 0
     // // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
       {
@@ -114,9 +113,8 @@ public:
         }
       };
 
-    canvas_->find("button1")->connect(callback);
-    canvas_->find("button2")->connect(callback);
-#endif
+    canvas_.findWidget("button1")->connect(callback);
+    canvas_.findWidget("button2")->connect(callback);
   }
 
 
@@ -146,9 +144,7 @@ public:
     if (touching)
     {
       touching_ = true;
-      ci::vec2 size = ci::app::getWindowSize();
-
-      // root_widget_->touchBegan(touches[0], -size / 2.0f, size);
+      canvas_.touchBegan(touches[0]);
     }
   }
 
@@ -162,8 +158,7 @@ public:
     {
       if (touch_id_ == touch.getId())
       {
-        ci::vec2 size = ci::app::getWindowSize();
-        // root_widget_->touchMoved(touch, -size / 2.0f, size);
+        canvas_.touchMoved(touch);
         break;
       }
     }
@@ -179,9 +174,7 @@ public:
     {
       if (touch_id_ == touch.getId())
       {
-        ci::vec2 size = ci::app::getWindowSize();
-        // root_widget_->touchEnded(touch, -size / 2.0f, size);
-
+        canvas_.touchEnded(touch);
         touching_ = false;
         break;
       }

@@ -45,34 +45,31 @@
 
       "active":      true,
       "display":     true,
-      "touch_event": true,
+      "touch_event": true
+    },
+    {
+      "identifier": "button2",
 
-      "childlen": [
-        {
-          "identifier": "button2",
+      "rect": [ -25, -25, 25, 0 ],
 
-          "rect": [ -25, 0, 25, 25 ],
+      "anchor": [
+        [ 0.5, 1.0 ],
+        [ 0.5, 1.0 ]
+      ],
 
-          "anchor": [
-            [ 0.5, 0.0 ],
-            [ 0.5, 0.0 ]
-          ],
+      "pivot": [ 0.5, 0.5 ],
 
-          "pivot": [ 0.5, 0.5 ],
+      "scale": [ 1, 1 ],
 
-          "scale": [ 1, 1 ],
+      "type": "fill_rect",
+      "params": {
+      },
 
-          "type": "fill_rect",
-          "params": {
-          },
+      "color": [ 0.0, 0.0, 1.0, 1 ],
 
-          "color": [ 0.0, 0.0, 1.0, 1 ],
-
-          "active":      true,
-          "display":     true,
-          "touch_event": true
-        }
-      ]
+      "active":      true,
+      "display":     true,
+      "touch_event": true
     }
   ]
 }
