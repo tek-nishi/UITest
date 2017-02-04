@@ -44,7 +44,8 @@ class UITestApp : public ci::app::App
     // TIPS:要素数が確定しているので予め確保できる
     app_touches.reserve(touches.size());
 
-    for (const auto& t : touches) {
+    for (const auto& t : touches)
+    {
       Touch touch{ t.getId(), calcScreenPosition(t.getPos()), calcScreenPosition(t.getPrevPos()), false };
       app_touches.push_back(std::move(touch));
     }
