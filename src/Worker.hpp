@@ -13,11 +13,13 @@
 #include "UICanvas.hpp"
 #include "UIDrawer.hpp"
 #include "UIWidgetsFactory.hpp"
+#include "TweenHandler.hpp"
 
 
 namespace ngs {
 
-class Worker {
+class Worker
+{
   // 汎用的なコールバック管理
   Event<Arguments> event_;
   ConnectionHolder holder_;
@@ -45,6 +47,9 @@ class Worker {
   // UI生成用
   UI::WidgetsFactory widgets_factory_;
 
+  // Tweenテスト
+  TweenHandler handler_ = TweenHandler(Params::load("test_tween.json"));
+
   bool touching_ = false;
   uint32_t touch_id_;
 
@@ -58,7 +63,7 @@ public:
     // JSONファイルからWidgetを生成
     canvas_.setWidgets(widgets_factory_.construct(Params::load("widgets.json")));
 
-    
+
     // // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
       {
@@ -69,6 +74,7 @@ public:
         case UI::Widget::TouchEvent::BEGAN:
           {
             DOUT << "TOUCH_BEGAN" << std::endl;
+            handler_.start(timeline_, &widget);
           }
           break;
 
@@ -115,6 +121,7 @@ public:
 
     canvas_.findWidget("button1")->connect(callback);
     canvas_.findWidget("button2")->connect(callback);
+    canvas_.findWidget("button3")->connect(callback);
   }
 
 

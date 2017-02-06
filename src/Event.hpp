@@ -14,7 +14,9 @@ namespace ngs {
 using Connection = boost::signals2::connection;
 
 template <typename... Args>
-class Event : private boost::noncopyable {
+class Event
+  : private boost::noncopyable
+{
   using SignalType = boost::signals2::signal<void(Args&...)>;
 
   std::map<std::string, SignalType> signals_;
@@ -28,18 +30,18 @@ public:
   Connection connect(const std::string& msg, F callback) noexcept
   {
     return signals_[msg].connect_extended(callback);
-  }  
+  }
 
-  
+
   template <typename... Args2>
   void signal(const std::string& msg, Args2&&... args) noexcept
   {
     signals_[msg](args...);
   }
 
-  
+
 private:
-  
+
 };
 
 }

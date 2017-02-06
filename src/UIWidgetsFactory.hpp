@@ -127,7 +127,7 @@ class WidgetsFactory
 
   // JSONから生成(階層構造も含む)
   WidgetPtr create(const ci::JsonTree& params,
-                   const std::shared_ptr<std::map<std::string, Widget*>>& widgets) const noexcept
+                   const WidgetQueryPtr& widgets) const noexcept
   {
     // UI::Widgetを生成するのに必要な値
     auto identifier = params.getValueForKey<std::string>("identifier");
@@ -200,7 +200,7 @@ public:
   WidgetPtr construct(const ci::JsonTree& params) noexcept
   {
     // クエリ用
-    std::shared_ptr<std::map<std::string, Widget*>> widgets = std::make_shared<std::map<std::string, Widget*>>();
+    auto widgets = std::make_shared<WidgetQuery>();
     return create(params, widgets);
   }
   

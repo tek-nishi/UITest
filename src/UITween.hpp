@@ -17,13 +17,13 @@ class Tween
   struct Param
   {
     ci::EaseFn ease;
-    
+
     boost::optional<T> start;
     boost::optional<T> end;
 
     float duration;
     boost::optional<float> delay;
-    
+
     bool ping_pong;
     bool loop;
   };
@@ -32,14 +32,14 @@ class Tween
   std::vector<Param<ci::vec2>>   scale_;
   std::vector<Param<ci::ColorA>> color_;
 
-  
+
   template <typename T>
   static Param<T> createParam(const ci::JsonTree& params) noexcept
   {
     Param<T> p;
 
     p.ease = getEaseFunc(params.getValueForKey<std::string>("type"));
-    
+
     if (params.hasChild("start"))
     {
       p.start = Json::getVec<T>(params["start"]);
@@ -57,10 +57,10 @@ class Tween
 
     p.ping_pong = Json::getValue(params, "ping_pong", false);
     p.loop      = Json::getValue(params, "loop", false);
-    
+
     return p;
   }
-  
+
   template <typename T>
   static void apply(const ci::TimelineRef& timeline, ci::Anim<T>& target, const Param<T>& param) noexcept
   {
@@ -86,7 +86,7 @@ class Tween
   template <typename T>
   static void applyAndAppend(const ci::TimelineRef& timeline,
                              ci::Anim<T>& target, const std::vector<Param<T>>& params) noexcept
-  {    
+  {
     apply(timeline, target, params[0]);
 
     for (size_t i = 1; i < params.size(); ++i)
@@ -96,7 +96,7 @@ class Tween
   }
 
 
-  
+
 public:
   Tween(const ci::JsonTree& params) noexcept
   {
@@ -107,7 +107,7 @@ public:
       {
         // 位置のtween
         position_.push_back(createParam<ci::vec2>(p));
-        
+
         if (p.hasChild("append"))
         {
           for (const auto& append : p["append"])
@@ -119,7 +119,7 @@ public:
       else if (target == "scale")
       {
         scale_.push_back(createParam<ci::vec2>(p));
-        
+
         if (p.hasChild("append"))
         {
           for (const auto& append : p["append"])
@@ -148,7 +148,7 @@ public:
   {
     return !position_.empty();
   }
-  
+
   bool hasScaleTweens() const noexcept
   {
     return !scale_.empty();
@@ -158,7 +158,7 @@ public:
   {
     return !color_.empty();
   }
-  
+
 
   void start(const ci::TimelineRef& timeline,
              ci::Anim<ci::vec2>& position,
@@ -169,7 +169,7 @@ public:
     {
       applyAndAppend(timeline, position, position_);
     }
-    
+
     if (hasScaleTweens())
     {
       applyAndAppend(timeline, scale, scale_);

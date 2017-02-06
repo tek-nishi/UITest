@@ -2,6 +2,7 @@
 
 //
 // UI部品
+//  TODO:WidgetのRectの計算量を減らす
 //
 
 #include <boost/noncopyable.hpp>
@@ -18,6 +19,10 @@ namespace ngs { namespace UI {
 // TIPS:自分自身を引数に取る関数があるので先行宣言が必要
 class Widget;
 using WidgetPtr = std::shared_ptr<Widget>;
+
+// クエリ用コンテナ
+using WidgetQuery    = std::map<std::string, Widget*>;
+using WidgetQueryPtr = std::shared_ptr<WidgetQuery>;
 
 // 描画用関数
 using DrawFunc = std::function<void (const Widget&, const ci::Rectf& rect, const ci::vec2& scale)>;
@@ -56,7 +61,7 @@ private:
 
   ci::vec2 scale_ = { 1.0f, 1.0f };
 
-  ci::Anim<ci::ColorA> color_;
+  ci::ColorA color_ = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 
   bool active_      = true;       // 有効・無効
@@ -71,7 +76,7 @@ private:
 
   std::vector<WidgetPtr> childs_;
   // クエリ用
-  std::shared_ptr<std::map<std::string, Widget*>> widgets_;
+  WidgetQueryPtr widgets_;
 
   // タッチイベントのコールバック
   using EventType = boost::signals2::signal<void (Widget&, const TouchEvent, const Touch&)>;
@@ -93,7 +98,7 @@ private:
 
 public:
   Widget(std::string identifier, const ci::Rectf& rect,
-         const std::shared_ptr<std::map<std::string, Widget*>>& widgets,
+         const WidgetQueryPtr& widgets,
          const ci::TimelineRef& timeline, DrawFunc drawer) noexcept
     : identifier_(std::move(identifier)),
       rect_(rect),
@@ -282,12 +287,12 @@ public:
   }
 
   // 基本色
-  ci::Anim<ci::ColorA>& getColor() noexcept
+  ci::ColorA& getColor() noexcept
   {
     return color_;
   }
 
-  const ci::Anim<ci::ColorA>& getColor() const noexcept
+  const ci::ColorA& getColor() const noexcept
   {
     return color_;
   }
@@ -326,6 +331,36 @@ public:
     return widgets_->at(identifier);
   }
 
+  // 文字列の示す値を返す
+  float* getParam(const std::string& target) noexcept
+  {
+    std::map<std::string, std::function<float*()>> table = {
+      { "rect_x1", [this]() { return &rect_.x1; } },
+      { "rect_x2", [this]() { return &rect_.x2; } },
+      { "rect_y1", [this]() { return &rect_.y1; } },
+      { "rect_y2", [this]() { return &rect_.y2; } },
+      
+      { "pivot_x", [this]() { return &pivot_.x; } },
+      { "pivot_y", [this]() { return &pivot_.y; } },
+
+      { "anchor_min_x", [this]() { return &anchor_min_.x; } },
+      { "anchor_min_y", [this]() { return &anchor_min_.y; } },
+      { "anchor_max_x", [this]() { return &anchor_max_.x; } },
+      { "anchor_max_y", [this]() { return &anchor_max_.y; } },
+      
+      { "scale_x", [this]() { return &scale_.x; } },
+      { "scale_y", [this]() { return &scale_.y; } },
+
+      { "color_r", [this]() { return &color_.r; } },
+      { "color_g", [this]() { return &color_.g; } },
+      { "color_b", [this]() { return &color_.b; } },
+      { "color_a", [this]() { return &color_.a; } },
+    };
+
+    float* param = table.at(target)();
+    return param;
+  }
+  
 
   // パラメーターの読み書きを簡易に書くためのラッパー
   const boost::any& operator[](const std::string& key) const

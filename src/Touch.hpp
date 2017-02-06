@@ -7,14 +7,15 @@
 
 namespace ngs {
 
-class Touch {
+class Touch
+{
   uint32_t id_;
 
   ci::vec2 pos_;
   ci::vec2 prev_pos_;
 
   bool is_mouse_;
-  
+
 
 public:
   Touch(const uint32_t id,

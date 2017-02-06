@@ -2,6 +2,7 @@
 
 //
 // UI管理
+//  TODO:CameraPerspにも対応
 //
 
 #include <cinder/Camera.h>
@@ -10,14 +11,15 @@
 
 namespace ngs { namespace UI {
 
-class Canvas {
+class Canvas
+{
   ci::CameraOrtho camera_;
 
   ci::vec2 size_;
   ci::Rectf rect_;
 
   UI::WidgetPtr root_widget_;
-  
+
 
 public:
   Canvas() noexcept
@@ -41,7 +43,7 @@ public:
   {
     return root_widget_->find(identifier);
   }
-  
+
 
   void resize(const ci::vec2& size) noexcept
   {
@@ -72,8 +74,8 @@ public:
     ci::vec2 scale{ 1.0f, 1.0f };
     root_widget_->touchEnded(touch, rect_, scale);
   }
-  
-  
+
+
   void draw() noexcept
   {
     ci::gl::setMatrices(camera_);
@@ -81,7 +83,7 @@ public:
     ci::vec2 scale{ 1.0f, 1.0f };
     root_widget_->draw(rect_, scale);
   }
-  
+
 };
 
 } }
