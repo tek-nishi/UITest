@@ -4,9 +4,21 @@
     
     "clip": [
       {
-        "type": "EaseInQuad",
+        "type": "EaseOutBack",
 
-        "duration": 0.25,
+        "duration": 0.2,
+
+        "start": 0.8,
+        "end": 1.25,
+        
+        "delay": 0,
+        "ping_pong": false,
+        "loop": false
+      },
+      {
+        "type": "EaseOutBack",
+
+        "duration": 0.2,
 
         "end": 1,
         
@@ -21,9 +33,21 @@
     
     "clip": [
       {
-        "type": "EaseInQuad",
+        "type": "EaseOutBack",
 
-        "duration": 0.25,
+        "duration": 0.2,
+
+        "start": 0.8,
+        "end": 1.25,
+        
+        "delay": 0,
+        "ping_pong": false,
+        "loop": false
+      },
+      {
+        "type": "EaseOutBack",
+
+        "duration": 0.2,
 
         "end": 1,
         

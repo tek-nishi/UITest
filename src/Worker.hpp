@@ -10,6 +10,7 @@
 #include "Arguments.hpp"
 #include "ConnectionHolder.hpp"
 #include "Params.hpp"
+#include "Scene.hpp"
 #include "UICanvas.hpp"
 #include "UIDrawer.hpp"
 #include "UIWidgetsFactory.hpp"
@@ -30,9 +31,6 @@ class Worker
   // UIなどきっかけが必要な演出用
   ci::TimelineRef timeline_;
 
-  // UI
-  UI::Canvas canvas_;
-
   // UI描画用関数群
   const std::map<std::string, UI::DrawFunc> draw_func_ = {
     { "blank",              UI::Drawer::blank },
@@ -47,8 +45,7 @@ class Worker
   // UI生成用
   UI::WidgetsFactory widgets_factory_;
 
-  // Tweenテスト
-  TweenSet tween_set_ = TweenSet(Params::load("tween_set.json"));
+  Scene scene_;
 
   bool touching_ = false;
   uint32_t touch_id_;
@@ -58,13 +55,10 @@ public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    widgets_factory_(draw_func_)
+    widgets_factory_(draw_func_),
+    scene_(Params::load("scene_test.json"), widgets_factory_)
   {
-    // JSONファイルからWidgetを生成
-    canvas_.setWidgets(widgets_factory_.construct(Params::load("widgets.json")));
-
-
-    // // コールバック関数
+    // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
       {
         DOUT << widget.getIdentifier() << ":";
@@ -74,7 +68,7 @@ public:
         case UI::Widget::TouchEvent::BEGAN:
           {
             DOUT << "TOUCH_BEGAN" << std::endl;
-            tween_set_.start("began", timeline_, &widget);
+            scene_.getTweenSet().start("began", timeline_, &widget);
           }
           break;
 
@@ -105,7 +99,7 @@ public:
         case UI::Widget::TouchEvent::ENDED_IN:
           {
             DOUT << "TOUCH_ENDED_IN" << std::endl;
-            tween_set_.start("ended", timeline_, &widget);
+            scene_.getTweenSet().start("ended", timeline_, &widget);
           }
           break;
 
@@ -120,9 +114,11 @@ public:
         }
       };
 
-    canvas_.findWidget("button1")->connect(callback);
-    canvas_.findWidget("button2")->connect(callback);
-    canvas_.findWidget("button3")->connect(callback);
+    scene_.getCanvas().findWidget("button1")->connect(callback);
+    scene_.getCanvas().findWidget("button2")->connect(callback);
+    scene_.getCanvas().findWidget("button3")->connect(callback);
+
+    scene_.getTweenSet().start("start", timeline_, scene_.getCanvas().rootWidget());
   }
 
 
@@ -152,7 +148,7 @@ public:
     if (touching)
     {
       touching_ = true;
-      canvas_.touchBegan(touches[0]);
+      scene_.getCanvas().touchBegan(touches[0]);
     }
   }
 
@@ -166,7 +162,7 @@ public:
     {
       if (touch_id_ == touch.getId())
       {
-        canvas_.touchMoved(touch);
+        scene_.getCanvas().touchMoved(touch);
         break;
       }
     }
@@ -182,7 +178,7 @@ public:
     {
       if (touch_id_ == touch.getId())
       {
-        canvas_.touchEnded(touch);
+        scene_.getCanvas().touchEnded(touch);
         touching_ = false;
         break;
       }
@@ -192,7 +188,7 @@ public:
 
   void resize() noexcept
   {
-    canvas_.resize(ci::app::getWindowSize());
+    scene_.getCanvas().resize(ci::app::getWindowSize());
   }
 
   void update() noexcept
@@ -203,7 +199,7 @@ public:
   void draw() noexcept
   {
     ci::gl::clear(ci::Color(0, 0, 0));
-    canvas_.draw();
+    scene_.getCanvas().draw();
   }
 
 };

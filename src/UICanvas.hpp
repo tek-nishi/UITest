@@ -21,11 +21,10 @@ class Canvas
   UI::WidgetPtr root_widget_;
 
 
-public:
-  Canvas() noexcept
+  void setupCamera(const ci::vec2& size) noexcept
   {
-    size_ = ci::app::getWindowSize();
-
+    size_ = size;
+    
     // 画面中央が原点。右方向がX軸プラス、上方向がY軸プラスの座標系
     camera_.setOrtho(-size_.x / 2.0f, size_.x / 2.0f,
                      -size_.y / 2.0f, size_.y / 2.0f,
@@ -34,11 +33,30 @@ public:
     rect_ = ci::Rectf(-size_.x / 2.0f, -size_.y / 2.0f, size_.x / 2.0f, size_.y / 2.0f);
   }
 
+
+public:
+  Canvas() noexcept
+  {
+    setupCamera(ci::app::getWindowSize());
+  }
+
+  Canvas(const UI::WidgetPtr& root_widget) noexcept
+  {
+    setupCamera(ci::app::getWindowSize());
+    root_widget_ = root_widget;
+  }
+  
+
   void setWidgets(const UI::WidgetPtr& root_widget) noexcept
   {
     root_widget_ = root_widget;
   }
 
+  Widget* rootWidget() noexcept
+  {
+    return root_widget_.get();
+  }
+  
   Widget* findWidget(const std::string& identifier) noexcept
   {
     return root_widget_->find(identifier);
@@ -47,13 +65,7 @@ public:
 
   void resize(const ci::vec2& size) noexcept
   {
-    size_ = size;
-
-    camera_.setOrtho(-size_.x / 2.0f, size_.x / 2.0f,
-                     -size_.y / 2.0f, size_.y / 2.0f,
-                     -1.0f, 100.0f);
-
-    rect_ = ci::Rectf(-size_.x / 2.0f, -size_.y / 2.0f, size_.x / 2.0f, size_.y / 2.0f);
+    setupCamera(size);
   }
 
 

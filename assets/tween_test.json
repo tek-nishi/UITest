@@ -1,0 +1,15 @@
+[
+  {
+    "id":     "start",
+    "handle": "tween_start.json"
+  },
+  
+  {
+    "id":     "began",
+    "handle": "tween_began.json"
+  },
+  {
+    "id":     "ended",
+    "handle": "tween_ended.json"
+  }
+]
