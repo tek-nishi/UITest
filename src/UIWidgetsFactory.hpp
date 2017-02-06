@@ -6,7 +6,6 @@
 
 #include <cinder/ImageIo.h>
 #include "UIWidget.hpp"
-#include "UITween.hpp"
 #include "UIDrawer.hpp"
 
 
@@ -15,32 +14,8 @@ namespace ngs { namespace UI {
 class WidgetsFactory
   : private boost::noncopyable
 {
-  ci::TimelineRef timeline_;
-  
   // TIPS:文字列から描画関数を指定用
   const std::map<std::string, DrawFunc> draw_func_;
-
-  // Tween設定
-  Tween tween_;
-
-#if 0
-  void tweenCallback(const WidgetPtr& widget) const noexcept
-  {
-    widget->connect([this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
-                    {
-                      switch (touch_event)
-                      {
-                      case UI::Widget::TouchEvent::BEGAN:
-                        tween_.start(widget.getTimeline(), widget.getPosition(), widget.getScale(), widget.getColor());
-                        break;
-                        
-                      case UI::Widget::TouchEvent::ENDED_IN:
-                      case UI::Widget::TouchEvent::ENDED_OUT:
-                        break;
-                      }
-                    });
-  }
-#endif
 
   
   // 各種値をJsonから読み取る
@@ -134,7 +109,7 @@ class WidgetsFactory
     auto rect = Json::getRect(params["rect"]);
     DrawFunc draw_func = draw_func_.at(params.getValueForKey<std::string>("type"));
 
-    auto widget = std::make_shared<UI::Widget>(identifier, rect, widgets, timeline_, draw_func);
+    auto widget = std::make_shared<UI::Widget>(identifier, rect, widgets, draw_func);
 
     // アンカー
     if (params.hasChild("anchor"))
@@ -186,10 +161,8 @@ class WidgetsFactory
 
   
 public:
-  WidgetsFactory(const ci::TimelineRef& timeline, const std::map<std::string, DrawFunc>& draw_func) noexcept
-    : timeline_(timeline),
-      draw_func_(draw_func),
-      tween_(Params::load("tween.json"))
+  WidgetsFactory(const std::map<std::string, DrawFunc>& draw_func) noexcept
+    : draw_func_(draw_func)
   {
   }
 

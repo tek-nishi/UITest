@@ -8,7 +8,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/any.hpp>
 #include <boost/optional.hpp>
-#include <cinder/Timeline.h>
 #include "Touch.hpp"
 #include "Event.hpp"
 #include "Misc.hpp"
@@ -71,9 +70,6 @@ private:
   // TIPS:振る舞いの違いを継承を使わないで実現する作戦
   std::map<std::string, boost::any> params_;
 
-  // UIなどきっかけが必要な演出用
-  ci::TimelineRef timeline_ = ci::Timeline::create();
-
   std::vector<WidgetPtr> childs_;
   // クエリ用
   WidgetQueryPtr widgets_;
@@ -98,25 +94,17 @@ private:
 
 public:
   Widget(std::string identifier, const ci::Rectf& rect,
-         const WidgetQueryPtr& widgets,
-         const ci::TimelineRef& timeline, DrawFunc drawer) noexcept
+         const WidgetQueryPtr& widgets, DrawFunc drawer) noexcept
     : identifier_(std::move(identifier)),
       rect_(rect),
       widgets_(widgets),
       drawer_(drawer)
   {
-    // 親のタイムラインに接続
-    timeline->add(timeline_);
-
     // クエリ用のコンテナに自分を登録
     widgets_->insert({ identifier_, this });
   }
 
-  ~Widget()
-  {
-    // 親から取り除く
-    timeline_->removeSelf();
-  }
+  ~Widget() = default;
 
 
   // FIXME:上流でシングルタッチ判定を行う
@@ -302,24 +290,6 @@ public:
     color_ = color;
   }
 
-#if 0
-  // Tween向け
-  ci::Anim<ci::vec2>& getPosition() noexcept
-  {
-    return position_;
-  }
-
-  ci::Anim<ci::vec2>& getScale() noexcept
-  {
-    return scale_;
-  }
-#endif
-
-  const ci::TimelineRef& getTimeline() const noexcept
-  {
-    return timeline_;
-  }
-
 
   void addChild(const WidgetPtr& widget) noexcept
   {
@@ -378,27 +348,6 @@ public:
   {
     return boost::any_cast<const T&>(params_.at(key));
   }
-
-
-#if 0
-  template<typename T>
-  void setParam(const std::string& key, const T& param)
-  {
-    params_.insert({ key, param });
-  }
-
-  template<typename T>
-  T& getParam(const std::string& key) noexcept
-  {
-    return boost::any_cast<T&>(params_.at(key));
-  }
-
-  template<typename T>
-  const T& getParam(const std::string& key) const noexcept
-  {
-    return boost::any_cast<const T&>(params_.at(key));
-  }
-#endif
 
 
   template<typename F>

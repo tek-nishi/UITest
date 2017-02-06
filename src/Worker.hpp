@@ -58,7 +58,7 @@ public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    widgets_factory_(timeline_, draw_func_)
+    widgets_factory_(draw_func_)
   {
     // JSONファイルからWidgetを生成
     canvas_.setWidgets(widgets_factory_.construct(Params::load("widgets.json")));
