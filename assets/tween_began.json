@@ -1,0 +1,38 @@
+[
+  {
+    "target": "scale_x",
+    
+    "clip": [
+      {
+        "type": "EaseInQuad",
+
+        "duration": 0.25,
+
+        "start": 1,
+        "end": 1.25,
+        
+        "delay": 0,
+        "ping_pong": false,
+        "loop": false
+      }
+    ]
+  },
+  {
+    "target": "scale_y",
+    
+    "clip": [
+      {
+        "type": "EaseInQuad",
+
+        "duration": 0.25,
+
+        "start": 1,
+        "end": 1.25,
+        
+        "delay": 0,
+        "ping_pong": false,
+        "loop": false
+      }
+    ]
+  }
+]

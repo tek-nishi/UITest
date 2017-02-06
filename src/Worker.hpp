@@ -13,7 +13,7 @@
 #include "UICanvas.hpp"
 #include "UIDrawer.hpp"
 #include "UIWidgetsFactory.hpp"
-#include "TweenHandler.hpp"
+#include "TweenSet.hpp"
 
 
 namespace ngs {
@@ -48,7 +48,7 @@ class Worker
   UI::WidgetsFactory widgets_factory_;
 
   // Tweenテスト
-  TweenHandler handler_ = TweenHandler(Params::load("test_tween.json"));
+  TweenSet tween_set_ = TweenSet(Params::load("tween_set.json"));
 
   bool touching_ = false;
   uint32_t touch_id_;
@@ -74,7 +74,7 @@ public:
         case UI::Widget::TouchEvent::BEGAN:
           {
             DOUT << "TOUCH_BEGAN" << std::endl;
-            handler_.start(timeline_, &widget);
+            tween_set_.start("began", timeline_, &widget);
           }
           break;
 
@@ -105,6 +105,7 @@ public:
         case UI::Widget::TouchEvent::ENDED_IN:
           {
             DOUT << "TOUCH_ENDED_IN" << std::endl;
+            tween_set_.start("ended", timeline_, &widget);
           }
           break;
 
