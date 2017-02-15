@@ -26,7 +26,7 @@
     {
       "identifier": "button1",
 
-      "rect": [ -50, 0, 50, 50 ],
+      "rect": [ -100, 0, 100, 50 ],
 
       "anchor": [
         [ 0.5, 0.0 ],
@@ -41,11 +41,35 @@
       "params": {
       },
 
-      "color": [ 0.0, 1.0, 0.0, 1 ],
+      "color": [ 0.0, 0.5, 0.0, 1 ],
 
       "active":      true,
       "display":     true,
-      "touch_event": true
+      "touch_event": true,
+      
+      "childlen": [
+        {
+          "identifier": "text1",
+          "rect": [ 0, 0, 0, 0 ],
+          "anchor": [
+            [ 0.0, 0.0 ],
+            [ 1.0, 1.0 ]
+          ],
+
+          "type": "text",
+          "params": {
+            "font": [ "font", "jpn", "AkkoRoundedPro-Thin.ttf" ],
+            "size": [ "float", 32 ],
+            "text": [ "string", "Hoge Fuga" ]
+          },
+          
+          "color": [ 1.0, 1.0, 1.0, 1 ],
+
+          "active":      true,
+          "display":     true,
+          "touch_event": false
+        }
+      ]
     },
     {
       "identifier": "button2",

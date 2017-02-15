@@ -59,7 +59,6 @@ public:
   : params_(Params::load("params.json")),
     worker_(std::unique_ptr<Worker>(new Worker))
   {
-    // TIPS:Cinder 0.9.0ではコンストラクタが使える!!
   }
 
   

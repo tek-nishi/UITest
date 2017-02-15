@@ -43,6 +43,24 @@
 
       "color": [ 0.0, 1.0, 0.0, 1 ],
 
+      "childlen": [
+        {
+          "identifier": "text1",
+          "rect": [ 0, 0, 0, 0 ],
+          "anchor": [
+            [ 0.0, 0.0 ],
+            [ 1.0, 1.0 ]
+          ],
+
+          "type": "text",
+          "params": {
+            "font" [ "font", "DroidSansJapanese.ttf" ]
+          },
+          
+          "color": [ 1.0, 1.0, 1.0, 1 ],
+        }
+      ],
+
       "active":      true,
       "display":     true,
       "touch_event": true

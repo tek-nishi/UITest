@@ -205,9 +205,9 @@ public:
     ci::vec2 scale = parent_scale * scale_;
     auto rect = calcRect(parent_rect, scale);
 
-    // ci::app::console() << identifier_ << std::endl
-    //                    << rect << std::endl
-    //                    << scale << std::endl;
+    // DOUT << identifier_ << std::endl
+    //      << rect << std::endl
+    //      << scale << std::endl;
     
     drawer_(*this, rect, scale);
 

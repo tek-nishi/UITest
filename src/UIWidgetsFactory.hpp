@@ -5,8 +5,10 @@
 //
 
 #include <cinder/ImageIo.h>
+#include "Font.hpp"
 #include "UIWidget.hpp"
 #include "UIDrawer.hpp"
+#include "Misc.hpp"
 
 
 namespace ngs { namespace UI {
@@ -14,17 +16,16 @@ namespace ngs { namespace UI {
 class WidgetsFactory
   : private boost::noncopyable
 {
-  // TIPS:文字列から描画関数を指定用
-  const std::map<std::string, DrawFunc> draw_func_;
-
+  Drawer drwer_;
+  
   
   // 各種値をJsonから読み取る
-  static void loadParams(const WidgetPtr& widget, const ci::JsonTree& params)
+  void loadParams(const WidgetPtr& widget, const ci::JsonTree& params) noexcept
   {
     for (const auto& p : params["params"])
     {
       // TIPS:switch文の文字列版
-      static std::map<std::string, std::function<void(Widget& widget, const ci::JsonTree& params)>> functions = {
+      std::map<std::string, std::function<void(Widget& widget, const ci::JsonTree& params)>> functions = {
         {
           "color",
           [](Widget& widget, const ci::JsonTree& params)
@@ -91,6 +92,16 @@ class WidgetsFactory
             auto image = ci::gl::Texture2d::create(ci::loadImage(Asset::load(params.getValueAtIndex<std::string>(1))));
             widget[params.getKey()] = image;
           }
+        },
+        {
+          "font",
+          [this](Widget& widget, const ci::JsonTree& params)
+          {
+            drwer_.addFont(params.getValueAtIndex<std::string>(1),
+                           params.getValueAtIndex<std::string>(2));
+
+            widget[params.getKey()] = params.getValueAtIndex<std::string>(1);
+          }
         }
       };
       
@@ -102,12 +113,12 @@ class WidgetsFactory
 
   // JSONから生成(階層構造も含む)
   WidgetPtr create(const ci::JsonTree& params,
-                   const WidgetQueryPtr& widgets) const noexcept
+                   const WidgetQueryPtr& widgets) noexcept
   {
     // UI::Widgetを生成するのに必要な値
     auto identifier = params.getValueForKey<std::string>("identifier");
     auto rect = Json::getRect(params["rect"]);
-    DrawFunc draw_func = draw_func_.at(params.getValueForKey<std::string>("type"));
+    DrawFunc draw_func = drwer_.getFunc(params.getValueForKey<std::string>("type"));
 
     auto widget = std::make_shared<UI::Widget>(identifier, rect, widgets, draw_func);
 
@@ -142,10 +153,6 @@ class WidgetsFactory
     // パラメーター読み込み
     loadParams(widget, params);
 
-    // Tween
-    // tweenCallback(widget);
-
-    
     // 子供を追加
     // TIPS:再帰で実装
     if (params.hasChild("childlen"))
@@ -161,8 +168,7 @@ class WidgetsFactory
 
   
 public:
-  WidgetsFactory(const std::map<std::string, DrawFunc>& draw_func) noexcept
-    : draw_func_(draw_func)
+  WidgetsFactory() noexcept
   {
   }
 

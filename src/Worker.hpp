@@ -12,7 +12,6 @@
 #include "Params.hpp"
 #include "Scene.hpp"
 #include "UICanvas.hpp"
-#include "UIDrawer.hpp"
 #include "UIWidgetsFactory.hpp"
 #include "TweenSet.hpp"
 
@@ -31,17 +30,6 @@ class Worker
   // UIなどきっかけが必要な演出用
   ci::TimelineRef timeline_;
 
-  // UI描画用関数群
-  const std::map<std::string, UI::DrawFunc> draw_func_ = {
-    { "blank",              UI::Drawer::blank },
-    { "rect",               UI::Drawer::rect },
-    { "fill_rect",          UI::Drawer::fillRect },
-    { "rounded_rect",       UI::Drawer::roundedRect },
-    { "rounded_fill_rect",  UI::Drawer::roundedFillRect },
-    { "image",              UI::Drawer::image },
-    { "text",               UI::Drawer::text },
-  };
-
   // UI生成用
   UI::WidgetsFactory widgets_factory_;
 
@@ -55,7 +43,6 @@ public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    widgets_factory_(draw_func_),
     scene_(Params::load("scene_test.json"), widgets_factory_)
   {
     // コールバック関数
