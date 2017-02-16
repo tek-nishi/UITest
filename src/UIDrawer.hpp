@@ -79,6 +79,52 @@ class Drawer
     ci::gl::drawSolidRect(rect, ci::vec2(0, 0), ci::vec2(1, 1));
   }
 
+
+  static ci::vec2 calcTextPos(const ci::Rectf& rect, const ci::Rectf& bounds,
+                              const std::string& align_v, const std::string& align_h) noexcept
+  {
+    static std::map<std::string, std::function<float (const ci::Rectf& rect, const ci::Rectf& bounds)>> calc_v {
+      { "top",
+          [](const ci::Rectf& rect, const ci::Rectf& bounds) noexcept {
+          return rect.y2 - bounds.y2;
+        }
+      },
+      { "center",
+          [](const ci::Rectf& rect, const ci::Rectf& bounds) noexcept {
+          return ((rect.y2 - rect.y1) - bounds.y2) / 2.0f + rect.y1;
+        }
+      },
+      { "bottom",
+          [](const ci::Rectf& rect, const ci::Rectf& bounds) noexcept {
+          return rect.y1;
+        }
+      },
+    };
+    
+    static std::map<std::string, std::function<float (const ci::Rectf& rect, const ci::Rectf& bounds)>> calc_h {
+      { "left",
+          [](const ci::Rectf& rect, const ci::Rectf& bounds) noexcept {
+          return rect.x1;
+        }
+      },
+      { "center",
+          [](const ci::Rectf& rect, const ci::Rectf& bounds) noexcept {
+          return ((rect.x2 - rect.x1) - bounds.x2) / 2.0f + rect.x1;
+        }
+      },
+      { "right",
+          [](const ci::Rectf& rect, const ci::Rectf& bounds) noexcept {
+          return rect.x2 - bounds.x2;
+        }
+      },
+    };
+
+    float x = calc_h.at(align_h)(rect, bounds);
+    float y = calc_v.at(align_v)(rect, bounds);
+
+    return ci::vec2(x, y);
+  }
+  
   // 文字列表示
   void text(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
@@ -86,13 +132,24 @@ class Drawer
     ci::gl::ScopedGlslProg glsl(font_shader_);
 
     fonsSetSize(font_(), widget.at<float>("size"));
+    const ci::ColorA& color(widget.getColor());
+    fonsSetColor(font_(), font_.color(color.r, color.g, color.b, color.a));
+    
     int f = fonsGetFontByName(font_(), widget.at<std::string>("font").c_str());
     assert(f != FONS_INVALID);
     fonsSetFont(font_(), f);
 
-    const ci::ColorA& color(widget.getColor());
-    fonsSetColor(font_(), font_.color(color.r, color.g, color.b, color.a));
-    fonsDrawText(font_(), rect.x1, rect.y1, widget.at<std::string>("text").c_str(), nullptr);
+    const auto& text = widget.at<std::string>("text");
+    float bounds[4];
+    fonsTextBounds(font_(), 0, 0, text.c_str(), nullptr, bounds);
+
+    const auto& align_v = widget.at<std::string>("align_v");
+    const auto& align_h = widget.at<std::string>("align_h");
+    
+    auto pos = calcTextPos(rect, ci::Rectf(bounds[0], bounds[1], bounds[2], bounds[3]),
+                           align_v, align_h);
+
+    fonsDrawText(font_(), pos.x, pos.y, text.c_str(), nullptr);
   }
   
 
@@ -100,6 +157,7 @@ public:
   Drawer() noexcept
   {
     fonsClearState(font_());
+    fonsSetAlign(font_(), FONS_ALIGN_LEFT | FONS_ALIGN_BOTTOM);
   }
 
 
