@@ -58,7 +58,7 @@
 
           "type": "text",
           "params": {
-            "font": [ "font", "en", "AkkoRoundedPro-Thin.ttf" ],
+            "font": [ "font", "AkkoRoundedPro-Thin.ttf" ],
             "size": [ "float", 32 ],
             "align_v": [ "string", "center" ],
             "align_h": [ "string", "center" ],
@@ -157,7 +157,7 @@
 
               "type": "text",
               "params": {
-                "font": [ "font", "jpn", "DroidSansJapanese.ttf" ],
+                "font": [ "font", "DroidSansJapanese.ttf" ],
                 "size": [ "float", 32 ],
                 "align_v": [ "string", "top" ],
                 "align_h": [ "string", "left" ],

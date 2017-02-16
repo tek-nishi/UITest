@@ -97,9 +97,7 @@ class WidgetsFactory
           "font",
           [this](Widget& widget, const ci::JsonTree& params)
           {
-            drwer_.addFont(params.getValueAtIndex<std::string>(1),
-                           params.getValueAtIndex<std::string>(2));
-
+            drwer_.addFont(params.getValueAtIndex<std::string>(1));
             widget[params.getKey()] = params.getValueAtIndex<std::string>(1);
           }
         }

@@ -179,9 +179,9 @@ public:
   }
 
 
-  void addFont(const std::string& name, const std::string& path) noexcept
+  void addFont(const std::string& path) noexcept
   {
-    font_.add(name, path);
+    font_.add(path, path);
   }
 
 };
