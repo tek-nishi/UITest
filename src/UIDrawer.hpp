@@ -17,7 +17,22 @@ class Drawer
 {
   // 文字列描画用
   Font font_ = { 1024, 1024, FONS_ZERO_BOTTOMLEFT };
-  ci::gl::GlslProgRef font_shader_ = createShader("font", "font");
+
+  // シェーダー
+  ci::gl::GlslProgRef color_shader_   = createShader("color", "color");
+  ci::gl::GlslProgRef texture_shader_ = createShader("texture", "texture");
+  ci::gl::GlslProgRef font_shader_ =    createShader("font", "font");
+
+
+  static void setShader(const ci::gl::GlslProgRef& shader)
+  {
+    auto* ctx = ci::gl::context();
+    const ci::gl::GlslProg* current = ctx->getGlslProg();
+    // FIXME:同じシェーダーが設定済みかをポインタ比較で判断している
+    if (current == shader.get()) return;
+
+    shader->bind();
+  }
   
 
   // 何も描画しない
@@ -28,6 +43,8 @@ class Drawer
   // 枠だけ描画
   void rect(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
+    setShader(color_shader_);
+    
     // FIXME:仮描画
     ci::gl::color(widget.getColor());
     float line_width = widget.at<float>("line_width");
@@ -37,6 +54,8 @@ class Drawer
   // 一色塗り潰し
   void fillRect(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
+    setShader(color_shader_);
+
     // FIXME:仮描画
     ci::gl::color(widget.getColor());
     ci::gl::drawSolidRect(rect);
@@ -45,6 +64,8 @@ class Drawer
   // 角丸矩形
   void roundedRect(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
+    setShader(color_shader_);
+
     // FIXME:仮描画
     ci::gl::color(widget.getColor());
 
@@ -59,6 +80,8 @@ class Drawer
   // 一色塗り潰し(角丸)
   void roundedFillRect(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
+    setShader(color_shader_);
+
     // FIXME:仮描画
     ci::gl::color(widget.getColor());
     float corner_radius = widget.at<float>("corner_radius");
@@ -69,13 +92,11 @@ class Drawer
   // 画像描画
   void image(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
+    setShader(texture_shader_);
+
     // FIXME:仮描画
     ci::gl::color(widget.getColor());
-
     ci::gl::ScopedTextureBind texture(widget.at<ci::gl::Texture2dRef>("image"));
-    auto shader = ci::gl::ShaderDef().texture().color();
-    ci::gl::ScopedGlslProg glsl(ci::gl::getStockShader(shader));
-  
     ci::gl::drawSolidRect(rect, ci::vec2(0, 0), ci::vec2(1, 1));
   }
 
@@ -129,7 +150,7 @@ class Drawer
   void text(const UI::Widget& widget, const ci::Rectf& rect, const ci::vec2& scale) noexcept
   {
     // FIXME:仮描画
-    ci::gl::ScopedGlslProg glsl(font_shader_);
+    setShader(font_shader_);
 
     fonsSetSize(font_(), widget.at<float>("size"));
     const ci::ColorA& color(widget.getColor());
