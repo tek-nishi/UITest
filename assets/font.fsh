@@ -13,5 +13,5 @@ out vec4 oColor;
 
 
 void main(void) {
-  oColor = vec4(1, 1, 1, texture(uTex0, TexCoord0).r) * Color;
+  oColor = vec4(Color.rgb, texture(uTex0, TexCoord0).r * Color.a);
 }
