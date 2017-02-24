@@ -224,22 +224,58 @@ public:
     return identifier_;
   }
 
-  // 各種設定
+  // for Editor
+  std::string& getIdentifier() noexcept
+  {
+    return identifier_;
+  }
+
+  ci::Rectf& getRect() noexcept
+  {
+    return rect_;
+  }
+  
   void setPivot(const ci::vec2& pivot) noexcept
   {
     pivot_ = pivot;
   }
 
+  // for Editor
+  ci::vec2& getPivot() noexcept
+  {
+    return pivot_;
+  }
+  
   void setAnchor(const ci::vec2& anchor_min, const ci::vec2& anchor_max) noexcept
   {
     anchor_min_ = anchor_min;
     anchor_max_ = anchor_max;
   }
 
+  // for Editor
+  ci::vec2& getAnchorMin() noexcept
+  {
+    return anchor_min_;
+  }
+
+  // for Editor
+  ci::vec2& getAnchorMax() noexcept
+  {
+    return anchor_min_;
+  }
+  
+
   void setScale(const ci::vec2& scale) noexcept
   {
     scale_ = scale;
   }
+
+  // for Editor
+  ci::vec2& getScale() noexcept
+  {
+    return scale_;
+  }
+  
   
   // 有効・無効
   void enableActive(const bool enable) noexcept
@@ -252,6 +288,11 @@ public:
     return active_;
   }
 
+  bool& getActive() noexcept
+  {
+    return active_;
+  }
+  
   // 表示・非表示
   void enableDisplay(const bool enable) noexcept
   {
@@ -263,6 +304,11 @@ public:
     return display_;
   }
 
+  bool& getDisplay() noexcept
+  {
+    return display_;
+  }
+
   // タッチイベントの有効・無効
   void enableTouchEvent(const bool enable) noexcept
   {
@@ -270,6 +316,11 @@ public:
   }
 
   bool isTouchEvent() const noexcept
+  {
+    return touch_event_;
+  }
+
+  bool& getTouchEvent() noexcept
   {
     return touch_event_;
   }
@@ -296,6 +347,11 @@ public:
     childs_.push_back(widget);
   }
 
+  const std::vector<WidgetPtr>& getChilds() const noexcept
+  {
+    return childs_;
+  }
+  
   Widget* find(const std::string& identifier) noexcept
   {
     return widgets_->at(identifier);

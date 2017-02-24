@@ -56,6 +56,11 @@ public:
   {
     return root_widget_.get();
   }
+
+  const WidgetPtr& rootWidgetPtr() noexcept
+  {
+    return root_widget_;
+  }
   
   Widget* findWidget(const std::string& identifier) noexcept
   {

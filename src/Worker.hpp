@@ -14,6 +14,7 @@
 #include "UICanvas.hpp"
 #include "UIWidgetsFactory.hpp"
 #include "TweenSet.hpp"
+#include "UIEditor.hpp"
 
 
 namespace ngs {
@@ -32,18 +33,23 @@ class Worker
 
   // UI生成用
   UI::WidgetsFactory widgets_factory_;
-
+  
   Scene scene_;
 
   bool touching_ = false;
   uint32_t touch_id_;
 
+  
+  // UI編集
+  UI::Editor editor_;
+  
 
 public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
-    scene_(Params::load("scene_test.json"), widgets_factory_)
+    scene_(Params::load("scene_test.json"), widgets_factory_),
+    editor_(scene_.getCanvas())
   {
     // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)
@@ -187,6 +193,8 @@ public:
   {
     ci::gl::clear(ci::Color(0, 0, 0));
     scene_.getCanvas().draw();
+
+    editor_.draw();
   }
 
 };
