@@ -48,6 +48,7 @@ public:
 
 private:
   std::string identifier_;
+  std::string type_;
 
   ci::Rectf rect_;
 
@@ -109,7 +110,7 @@ public:
 
   // FIXME:上流でシングルタッチ判定を行う
   // TODO:酷いコピペを減らす
-  void touchBegan(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale)
+  void touchBegan(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale) noexcept
   {
     // TIPS:子供も含めて判定しない
     if (!display_) return;
@@ -133,7 +134,7 @@ public:
     }
   }
 
-  void touchMoved(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale)
+  void touchMoved(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale) noexcept
   {
     // TIPS:子供も含めて判定しない
     if (!display_) return;
@@ -173,7 +174,7 @@ public:
     }
   }
 
-  void touchEnded(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale)
+  void touchEnded(const Touch& touch, const ci::Rectf& parent_rect, const ci::vec2& parent_scale) noexcept
   {
     // TIPS:子供も含めて判定しない
     if (!display_) return;
@@ -223,11 +224,26 @@ public:
   {
     return identifier_;
   }
-
+  
   // for Editor
   std::string& getIdentifier() noexcept
   {
     return identifier_;
+  }
+
+  const std::string& getType() const noexcept
+  {
+    return type_;
+  }
+
+  std::string& getType() noexcept
+  {
+    return type_;
+  }
+
+  void setType(std::string type_id) noexcept
+  {
+    type_ = std::move(type_id);
   }
 
   ci::Rectf& getRect() noexcept
@@ -389,20 +405,26 @@ public:
   
 
   // パラメーターの読み書きを簡易に書くためのラッパー
-  const boost::any& operator[](const std::string& key) const
+  const boost::any& operator[](const std::string& key) const noexcept
   {
     return params_.at(key);
   }
 
-  boost::any& operator[](const std::string& key)
+  boost::any& operator[](const std::string& key) noexcept
   {
     return params_[key];
   }
 
   template<typename T>
-  const T& at(const std::string& key) const
+  const T& at(const std::string& key) const noexcept
   {
     return boost::any_cast<const T&>(params_.at(key));
+  }
+
+  template<typename T>
+  T& at(const std::string& key) noexcept
+  {
+    return boost::any_cast<T&>(params_.at(key));
   }
 
 

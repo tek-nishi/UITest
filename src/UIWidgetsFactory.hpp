@@ -89,8 +89,10 @@ class WidgetsFactory
           "image",
           [](Widget& widget, const ci::JsonTree& params)
           {
-            auto image = ci::gl::Texture2d::create(ci::loadImage(Asset::load(params.getValueAtIndex<std::string>(1))));
+            const auto& path = params.getValueAtIndex<std::string>(1);
+            auto image = ci::gl::Texture2d::create(ci::loadImage(Asset::load(path)));
             widget[params.getKey()] = image;
+            widget["path"] = path;
           }
         },
         {
@@ -116,9 +118,11 @@ class WidgetsFactory
     // UI::Widgetを生成するのに必要な値
     auto identifier = params.getValueForKey<std::string>("identifier");
     auto rect = Json::getRect(params["rect"]);
-    DrawFunc draw_func = drwer_.getFunc(params.getValueForKey<std::string>("type"));
+    const auto& type_id = params.getValueForKey<std::string>("type");
+    DrawFunc draw_func = drwer_.getFunc(type_id);
 
     auto widget = std::make_shared<UI::Widget>(identifier, rect, widgets, draw_func);
+    widget->setType(type_id);
 
     // アンカー
     if (params.hasChild("anchor"))
