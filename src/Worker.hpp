@@ -12,6 +12,7 @@
 #include "Params.hpp"
 #include "Scene.hpp"
 #include "UICanvas.hpp"
+#include "UIDrawer.hpp"
 #include "UIWidgetsFactory.hpp"
 #include "TweenSet.hpp"
 #include "UIEditor.hpp"
@@ -31,6 +32,8 @@ class Worker
   // UIなどきっかけが必要な演出用
   ci::TimelineRef timeline_;
 
+  UI::Drawer drawer_;
+  
   // UI生成用
   UI::WidgetsFactory widgets_factory_;
   
@@ -48,8 +51,9 @@ public:
   Worker() noexcept
   : params_(Params::load("params.json")),
     timeline_(ci::Timeline::create()),
+    widgets_factory_(drawer_),
     scene_(Params::load("scene_test.json"), widgets_factory_),
-    editor_(scene_.getCanvas())
+    editor_(scene_.getCanvas(), drawer_)
   {
     // コールバック関数
     auto callback = [this](Connection, UI::Widget& widget, const UI::Widget::TouchEvent touch_event, const Touch&)

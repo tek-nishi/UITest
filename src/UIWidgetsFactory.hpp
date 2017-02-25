@@ -16,7 +16,7 @@ namespace ngs { namespace UI {
 class WidgetsFactory
   : private boost::noncopyable
 {
-  Drawer drwer_;
+  Drawer& drwer_;
   
   
   // 各種値をJsonから読み取る
@@ -99,8 +99,9 @@ class WidgetsFactory
           "font",
           [this](Widget& widget, const ci::JsonTree& params)
           {
-            drwer_.addFont(params.getValueAtIndex<std::string>(1));
-            widget[params.getKey()] = params.getValueAtIndex<std::string>(1);
+            const auto& path = params.getValueAtIndex<std::string>(1);
+            drwer_.addFont(path);
+            widget[params.getKey()] = path;
           }
         }
       };
@@ -170,7 +171,8 @@ class WidgetsFactory
 
   
 public:
-  WidgetsFactory() noexcept
+  WidgetsFactory(Drawer& drwer) noexcept
+    : drwer_(drwer)
   {
   }
 

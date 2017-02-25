@@ -6,6 +6,7 @@
 
 #include <cinder/params/Params.h>
 #include "UICanvas.hpp"
+#include "UIDrawer.hpp"
 
 
 namespace ngs { namespace UI {
@@ -19,7 +20,8 @@ class Editor
   ci::params::InterfaceGlRef setting_ = ci::params::InterfaceGl::create("Setting", ci::ivec2(320, 640));
 
   Canvas& canvas_;
-
+  Drawer& drawer_;
+  
 
   // Widgetを列挙
   static void createWidgetList(std::vector<std::string>& list, std::vector<std::string>& id_list,
@@ -53,7 +55,7 @@ class Editor
 
   // Widget編集
   //   Widgetの種別に応じた設定
-  static void createWidgetSeparateSetting(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
+  void createWidgetSeparateSetting(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
   {
     setting->addSeparator();
     
@@ -78,7 +80,11 @@ class Editor
             });
         } },
       { "text",
-        [](const ci::params::InterfaceGlRef& setting, Widget* widget) {
+        [this](const ci::params::InterfaceGlRef& setting, Widget* widget) {
+          setting->addParam("font", &widget->at<std::string>("font")).updateFn([this, widget]() {
+              const auto& path = widget->at<std::string>("font");
+            drawer_.addFont(path);
+            });
           setting->addParam("size", &widget->at<float>("size"));
           setting->addParam("text", &widget->at<std::string>("text"));
           setting->addParam("align_v", &widget->at<std::string>("align_v"));
@@ -90,7 +96,7 @@ class Editor
     func_tbl.at(type_id)(setting, widget);
   }
   
-  static void createWidgetSetting(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
+  void createWidgetSetting(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
   {
     setting->clear();
 
@@ -132,8 +138,9 @@ class Editor
 
 
 public:
-  Editor(Canvas& canvas) noexcept
-    : canvas_(canvas)
+  Editor(Canvas& canvas, Drawer& drawer) noexcept
+    : canvas_(canvas),
+      drawer_(drawer)
   {
     list_ = createWidgetList(canvas.rootWidgetPtr());
     createWidgetSetting(setting_, canvas.rootWidget());
