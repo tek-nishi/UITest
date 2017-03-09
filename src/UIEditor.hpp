@@ -34,6 +34,8 @@ class Editor
 
     for (const auto& widget : parent_widget->getChilds())
     {
+      // 再起で子Widgetを列挙
+      // TIPS:識別子の頭に深さを表すハイフンを付与している
       createWidgetList(list, id_list, widget, depth + 1);
     }
   }
@@ -50,9 +52,79 @@ class Editor
         createWidgetSetting(setting_, widget);
       });
 
+    list->addSeparator();
+
+    list->addButton("Save", [this]() {
+        DOUT << "Saved Scene." << std::endl;
+      });
+    
     return list;
   }
 
+
+  // 画像Widget編集
+  void widgetImage(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
+  {
+    setting->addParam("path", &widget->at<std::string>("path")).updateFn([widget]() {
+        // TODO:エラー対策
+        auto image = ci::gl::Texture2d::create(ci::loadImage(Asset::load(widget->at<std::string>("path"))));
+              (*widget)["image"] = image;
+      });
+  }
+
+  // Text Widget編集
+  void widgetText(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
+  {
+    setting->addParam("font", &widget->at<std::string>("font")).updateFn([this, widget]() {
+        // TODO:エラー対策
+        const auto& path = widget->at<std::string>("font");
+        drawer_.addFont(path);
+      });
+    
+    setting->addParam("size", &widget->at<float>("size"));
+    setting->addParam("text", &widget->at<std::string>("text"));
+
+    {
+      static const std::vector<std::string> align_v_list = { "top", "center", "bottom" };
+    
+      setting->addParam("align_v", align_v_list,
+                        [widget](int index) {
+                          // Setter
+                          widget->at<std::string>("align_v") = align_v_list[index];
+                        },
+                        [widget]() {
+                          // Getter
+                          const auto& align_v = widget->at<std::string>("align_v");
+
+                          // 配列から値を探してそのindexを返却している
+                          auto it = std::find(std::begin(align_v_list), std::end(align_v_list), align_v);
+                          size_t index = std::distance(std::begin(align_v_list), it);
+                          if (index == align_v_list.size()) index = 1;
+                          return index;
+                        });
+    }
+
+    {
+      static const std::vector<std::string> align_h_list = { "left", "center", "right" };
+
+      setting->addParam("align_h", align_h_list,
+                        [widget](int index) {
+                          // Setter
+                          widget->at<std::string>("align_h") = align_h_list[index];
+                        },
+                        [widget]() {
+                          // Getter
+                          const auto& align_h = widget->at<std::string>("align_h");
+                          
+                          auto it = std::find(std::begin(align_h_list), std::end(align_h_list), align_h);
+                          size_t index = std::distance(std::begin(align_h_list), it);
+                          if (index == align_h_list.size()) index = 1;
+                          return index;
+                        });
+    }
+  }
+
+  
   // Widget編集
   //   Widgetの種別に応じた設定
   void createWidgetSeparateSetting(const ci::params::InterfaceGlRef& setting, Widget* widget) noexcept
@@ -62,6 +134,7 @@ class Editor
     static std::map<std::string, std::function<void(const ci::params::InterfaceGlRef& setting, Widget* widget)>> func_tbl = {
       { "blank",
         [](const ci::params::InterfaceGlRef& setting, Widget* widget) {} },
+
       { "rect",
         [](const ci::params::InterfaceGlRef& setting, Widget* widget) {
           setting->addParam("line width", &widget->at<float>("line_width"));
@@ -72,24 +145,11 @@ class Editor
         [](const ci::params::InterfaceGlRef& setting, Widget* widget) {} },
       { "rounded_fill_rect",
         [](const ci::params::InterfaceGlRef& setting, Widget* widget) {} },
+
       { "image",
-        [](const ci::params::InterfaceGlRef& setting, Widget* widget) {
-          setting->addParam("path", &widget->at<std::string>("path")).updateFn([widget]() {
-              auto image = ci::gl::Texture2d::create(ci::loadImage(Asset::load(widget->at<std::string>("path"))));
-              (*widget)["image"] = image;
-            });
-        } },
+        std::bind(&Editor::widgetImage, this, std::placeholders::_1, std::placeholders::_2) },
       { "text",
-        [this](const ci::params::InterfaceGlRef& setting, Widget* widget) {
-          setting->addParam("font", &widget->at<std::string>("font")).updateFn([this, widget]() {
-              const auto& path = widget->at<std::string>("font");
-            drawer_.addFont(path);
-            });
-          setting->addParam("size", &widget->at<float>("size"));
-          setting->addParam("text", &widget->at<std::string>("text"));
-          setting->addParam("align_v", &widget->at<std::string>("align_v"));
-          setting->addParam("align_h", &widget->at<std::string>("align_h"));
-        } },
+        std::bind(&Editor::widgetText,  this, std::placeholders::_1, std::placeholders::_2) },
     };
     
     const auto& type_id = widget->getType();
@@ -100,6 +160,7 @@ class Editor
   {
     setting->clear();
 
+    // 全UI共通のパラメーター
     setting->addParam("Identifier", &widget->getIdentifier());
     setting->addParam("Type", &widget->getType());
 
@@ -133,6 +194,7 @@ class Editor
     setting->addParam("display", &widget->getDisplay());
     setting->addParam("touch_event", &widget->getTouchEvent());
 
+    // 個別設定
     createWidgetSeparateSetting(setting, widget);
   }
 
@@ -145,8 +207,6 @@ public:
     list_ = createWidgetList(canvas.rootWidgetPtr());
     createWidgetSetting(setting_, canvas.rootWidget());
   }
-
-
 
   void draw() noexcept
   {

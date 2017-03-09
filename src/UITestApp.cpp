@@ -1,6 +1,6 @@
 ﻿//
 // UIテスト
-// 
+//
 
 #include <cinder/app/App.h>
 #include <cinder/app/RendererGl.h>
@@ -37,7 +37,7 @@ class UITestApp : public ci::app::App
     return ci::vec2(pos.x - half_size.x, half_size.y - pos.y);
   }
 
-  
+
   static std::vector<Touch> createTouchInfo(const std::vector<ci::app::TouchEvent::Touch>& touches) noexcept
   {
     std::vector<Touch> app_touches;
@@ -53,7 +53,7 @@ class UITestApp : public ci::app::App
     return app_touches;
   }
 
-  
+
 public:
   UITestApp() noexcept
   : params_(Params::load("params.json")),
@@ -61,7 +61,7 @@ public:
   {
   }
 
-  
+
 	void mouseDown(ci::app::MouseEvent event) noexcept override
   {
     // タッチ判定との整合性を取るため左クリック以外は無視
@@ -106,7 +106,7 @@ public:
     worker_->touchesEnded(touch_num_, { touch });
   }
 
-  
+
   void touchesBegan(ci::app::TouchEvent event) noexcept override
   {
     const auto& touches = event.getTouches();
@@ -115,14 +115,14 @@ public:
     auto app_touches = createTouchInfo(touches);
     worker_->touchesBegan(touch_num_, app_touches);
   }
-  
+
   void touchesMoved(ci::app::TouchEvent event) noexcept override
   {
     const auto& touches = event.getTouches();
     auto app_touches = createTouchInfo(touches);
     worker_->touchesMoved(touch_num_, app_touches);
   }
-  
+
   void touchesEnded(ci::app::TouchEvent event) noexcept override
   {
     const auto& touches = event.getTouches();
@@ -132,13 +132,19 @@ public:
     worker_->touchesEnded(touch_num_, app_touches);
   }
 
-  
+
   void keyDown(ci::app::KeyEvent event) noexcept override
   {
     // TODO:Soft Reset
   }
 
-  
+
+  void fileDrop(ci::app::FileDropEvent event) noexcept override
+  {
+    DOUT << event.getFile(0) << std::endl;
+  }
+
+
   void resize() noexcept override
   {
     worker_->resize();
@@ -148,7 +154,7 @@ public:
   {
     worker_->update();
   }
-  
+
 	void draw() noexcept override
   {
     worker_->draw();
